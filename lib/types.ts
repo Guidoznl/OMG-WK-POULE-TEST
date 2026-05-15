@@ -149,7 +149,8 @@ export type AdminBonusAnswer = {
 // ──────────────────────────────────────────────────────────────────────────
 export interface DataProvider {
   getCurrentUser(): Promise<Profile | null>
-  signInWithEmail(email: string): Promise<void>
+  signInWithPassword(email: string, password: string): Promise<void>
+  signUpWithPassword(email: string, password: string, displayName: string): Promise<void>
   signOut(): Promise<void>
   acceptTerms(version: string): Promise<void>
 
