@@ -676,6 +676,26 @@ class MockProvider implements DataProvider {
     this.persistAdminResults()
   }
 
+  async adminGetPredictionsForMatch(matchId: number): Promise<any[]> {
+    await this.requireAdmin()
+    const out: any[] = []
+    for (const user of TEST_USERS) {
+      const userPreds = this.predictions[user.id] || []
+      const myPred = userPreds.find(p => p.match_id === matchId)
+      if (myPred) {
+        out.push({
+          user_id: user.id,
+          display_name: user.display_name,
+          home_score: myPred.home_score,
+          away_score: myPred.away_score,
+          points_awarded: myPred.points_awarded,
+          submitted_at: myPred.submitted_at,
+        })
+      }
+    }
+    return out
+  }
+
   async adminConfirmAndScore(matchId: number): Promise<{ updated: number }> {
     await this.requireAdmin()
     const entry = this.adminResults[matchId]
