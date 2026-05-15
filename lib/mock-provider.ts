@@ -381,7 +381,16 @@ class MockProvider implements DataProvider {
     return this.getUserWithTermsOverride(this.currentUserId)
   }
 
-  async signInWithEmail(email: string): Promise<void> {
+  async signInWithPassword(email: string, _password: string): Promise<void> {
+    // Mock mode: wachtwoord wordt niet gecontroleerd, alleen email lookup
+    this.init()
+    const match = TEST_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
+    this.currentUserId = match?.id || 'user-jan'
+    saveToStorage(STORAGE_KEYS.currentUser, this.currentUserId)
+  }
+
+  async signUpWithPassword(email: string, _password: string, _displayName: string): Promise<void> {
+    // Mock mode: kies eerste matchende user of fallback
     this.init()
     const match = TEST_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
     this.currentUserId = match?.id || 'user-jan'
