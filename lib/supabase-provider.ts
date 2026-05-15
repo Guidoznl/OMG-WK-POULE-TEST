@@ -23,12 +23,38 @@ class SupabaseProvider implements DataProvider {
     return data
   }
 
-  async signInWithEmail(email: string): Promise<void> {
-    const { error } = await this.supabase.auth.signInWithOtp({
+  async signInWithPassword(email: string, password: string): Promise<void> {
+    const { error } = await this.supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      // Geef gebruiksvriendelijke errors in plaats van rauwe Supabase strings
+      if (error.message.toLowerCase().includes('invalid login')) {
+        throw new Error('Verkeerd email-adres of wachtwoord')
+      }
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        throw new Error('Bevestig eerst je email-adres (check je mail)')
+      }
+      throw error
+    }
+  }
+
+  async signUpWithPassword(email: string, password: string, displayName: string): Promise<void> {
+    const { error } = await this.supabase.auth.signUp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/predictions` }
+      password,
+      options: {
+        data: { display_name: displayName },
+        emailRedirectTo: `${window.location.origin}/predictions`,
+      },
     })
-    if (error) throw error
+    if (error) {
+      if (error.message.toLowerCase().includes('already registered')) {
+        throw new Error('Dit email-adres is al geregistreerd — gebruik "Inloggen"')
+      }
+      if (error.message.toLowerCase().includes('password')) {
+        throw new Error('Wachtwoord moet minimaal 6 tekens zijn')
+      }
+      throw error
+    }
   }
 
   async signOut(): Promise<void> {
