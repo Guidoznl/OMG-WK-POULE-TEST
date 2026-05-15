@@ -37,28 +37,22 @@ export default function AdminMatchPage() {
       setAway(entry.match.away_score!.toString())
     }
 
-    // Collect predictions across all users (mock-only — Supabase will need a join)
-    const users = (await provider.devListUsers?.()) || []
-    const all: PredictionWithUser[] = []
-    for (const u of users) {
-      // In real backend we'd query predictions joined with profiles.
-      // For mock we just call devSwitchUser + getMyPredictions per user. That's
-      // wasteful but it's localhost mock data; fine for the admin UI.
-      // Better: expose adminGetMatchPredictions(matchId). For brevity we inline:
-      // Quick workaround: read localStorage directly.
-      try {
-        const raw = window.localStorage.getItem('wkpool_predictions')
-        if (raw) {
-          const preds = JSON.parse(raw)
-          const userPreds = preds[u.id] || []
-          const myPred = userPreds.find((p: Prediction) => p.match_id === matchId)
-          if (myPred) {
-            all.push({ ...myPred, display_name: u.display_name, user_id: u.id })
-          }
-        }
-      } catch {}
+    // Collect predictions across all users via the data provider
+    try {
+      const preds = await provider.adminGetPredictionsForMatch(matchId)
+      setAllPredictions(preds.map((p: any) => ({
+        match_id: matchId,
+        user_id: p.user_id,
+        display_name: p.display_name,
+        home_score: p.home_score,
+        away_score: p.away_score,
+        submitted_at: p.submitted_at,
+        points_awarded: p.points_awarded,
+      })))
+    } catch (err) {
+      console.error('Could not load predictions:', err)
+      setAllPredictions([])
     }
-    setAllPredictions(all)
   }
 
   useEffect(() => {
