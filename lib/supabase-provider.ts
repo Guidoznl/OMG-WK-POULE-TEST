@@ -194,37 +194,104 @@ class SupabaseProvider implements DataProvider {
     return data || []
   }
 
-  // ── Admin methods (TODO: wire up against the SQL functions) ──
-  // For now these throw "not implemented" so the UI handles it cleanly.
-  // When you go to production, implement these against the matches/predictions
-  // tables and the score_match_predictions() SQL function from migration 001.
-
   async adminGetMatchOverview(): Promise<any[]> {
-    throw new Error('Supabase admin methods nog niet geïmplementeerd. Gebruik mock mode om de admin UI te testen.')
+    // Roep SQL functie aan voor de status + counts, en haal apart de match data op
+    const [overviewRes, matchesRes] = await Promise.all([
+      this.supabase.rpc('admin_get_match_overview'),
+      this.getMatches(),
+    ])
+
+    if (overviewRes.error) throw overviewRes.error
+
+    // Combine: match data uit getMatches + state/counts uit RPC
+    const overviewMap = new Map<number, any>()
+    for (const row of (overviewRes.data || [])) {
+      overviewMap.set(row.match_id, row)
+    }
+
+    return matchesRes.map(match => {
+      const info = overviewMap.get(match.id) || {
+        result_state: 'no_result', prediction_count: 0, exact_count: 0,
+      }
+      return {
+        match,
+        result_state: info.result_state,
+        prediction_count: Number(info.prediction_count || 0),
+        exact_count: Number(info.exact_count || 0),
+      }
+    })
   }
-  async adminSaveProvisionalScore(): Promise<void> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminSaveProvisionalScore(matchId: number, home: number, away: number): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_save_provisional_score', {
+      p_match_id: matchId, p_home: home, p_away: away,
+    })
+    if (error) throw new Error(error.message)
   }
-  async adminConfirmAndScore(): Promise<{ updated: number }> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminGetPredictionsForMatch(matchId: number): Promise<any[]> {
+    const { data, error } = await this.supabase.rpc('admin_get_predictions_for_match', {
+      p_match_id: matchId,
+    })
+    if (error) throw new Error(error.message)
+    return data || []
   }
-  async adminUnconfirm(): Promise<void> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminConfirmAndScore(matchId: number): Promise<{ updated: number }> {
+    const { data, error } = await this.supabase.rpc('admin_confirm_and_score', {
+      p_match_id: matchId,
+    })
+    if (error) throw new Error(error.message)
+    return { updated: Number(data || 0) }
   }
-  async adminClearScore(): Promise<void> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminUnconfirm(matchId: number): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_unconfirm', {
+      p_match_id: matchId,
+    })
+    if (error) throw new Error(error.message)
   }
+
+  async adminClearScore(matchId: number): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_clear_score', {
+      p_match_id: matchId,
+    })
+    if (error) throw new Error(error.message)
+  }
+
   async adminGetBonusAnswers(): Promise<any[]> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+    const { data, error } = await this.supabase.rpc('admin_get_bonus_answers')
+    if (error) throw new Error(error.message)
+    return (data || []).map((row: any) => ({
+      user_id: row.user_id,
+      display_name: row.display_name,
+      question_id: row.question_id,
+      answer_raw: row.answer_raw,
+      answer_normalized: row.answer_normalized,
+      points_awarded: row.points_awarded,
+    }))
   }
-  async adminNormalizeAnswer(): Promise<void> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminNormalizeAnswer(userId: string, questionId: number, normalized: string): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_normalize_answer', {
+      p_user_id: userId, p_question_id: questionId, p_normalized: normalized,
+    })
+    if (error) throw new Error(error.message)
   }
-  async adminSetBonusCorrectAnswer(): Promise<void> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminSetBonusCorrectAnswer(questionId: number, correctAnswer: string): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_set_bonus_correct_answer', {
+      p_question_id: questionId, p_correct: correctAnswer,
+    })
+    if (error) throw new Error(error.message)
   }
-  async adminScoreBonusQuestion(): Promise<{ updated: number }> {
-    throw new Error('Niet geïmplementeerd in Supabase provider')
+
+  async adminScoreBonusQuestion(questionId: number): Promise<{ updated: number }> {
+    const { data, error } = await this.supabase.rpc('admin_score_bonus_question', {
+      p_question_id: questionId,
+    })
+    if (error) throw new Error(error.message)
+    return { updated: Number(data || 0) }
   }
 }
 
