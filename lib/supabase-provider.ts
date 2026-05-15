@@ -81,26 +81,53 @@ class SupabaseProvider implements DataProvider {
   }
 
   async getMatches(stageId?: number): Promise<Match[]> {
+    // Twee aparte queries: matches+teams in één call, lock status in een tweede.
+    // We berekenen status client-side op basis van kickoff_ams om join issues
+    // met views te vermijden.
     let query = this.supabase
       .from('matches')
       .select(`
         *,
-        home_team:teams!matches_home_team_id_fkey(*),
-        away_team:teams!matches_away_team_id_fkey(*),
-        lock_status:match_lock_status!inner(lock_at, status)
+        home_team:home_team_id(*),
+        away_team:away_team_id(*)
       `)
       .order('kickoff_ams')
     if (stageId) query = query.eq('stage_id', stageId)
-    const { data } = await query
-    return (data || []).map((r: any) => ({
-      ...r,
-      lock_at: r.lock_status?.lock_at,
-      status: r.lock_status?.status,
-    }))
+    const { data, error } = await query
+    if (error) {
+      console.error('getMatches error:', error)
+      return []
+    }
+
+    const now = Date.now()
+    return (data || []).map((r: any) => {
+      const kickoff = new Date(r.kickoff_ams).getTime()
+      const lockAt = kickoff - 2 * 3600_000
+      const hasResult = r.home_score !== null && r.away_score !== null
+
+      let status: 'open' | 'locked' | 'in_progress' | 'finished'
+      if (hasResult && r.result_locked) status = 'finished'
+      else if (now >= kickoff) status = 'in_progress'
+      else if (now >= lockAt) status = 'locked'
+      else status = 'open'
+
+      return {
+        ...r,
+        lock_at: new Date(lockAt).toISOString(),
+        status,
+        // Voor wedstrijden zonder bevestigd resultaat: scores verbergen
+        home_score: r.result_locked ? r.home_score : null,
+        away_score: r.result_locked ? r.away_score : null,
+      }
+    })
   }
 
   async getMatchdaySummaries(): Promise<MatchdaySummary[]> {
-    const { data } = await this.supabase.from('matchday_summary').select('*')
+    const { data, error } = await this.supabase.from('matchday_summary').select('*')
+    if (error) {
+      console.error('getMatchdaySummaries error:', error)
+      return []
+    }
     return data || []
   }
 
