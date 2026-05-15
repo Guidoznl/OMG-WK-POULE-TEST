@@ -144,6 +144,16 @@ export type AdminBonusAnswer = {
   points_awarded: number | null
 }
 
+// One user's prediction for a single match (admin detail view)
+export type AdminPredictionForMatch = {
+  user_id: string
+  display_name: string
+  home_score: number
+  away_score: number
+  points_awarded: number | null
+  submitted_at: string
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Data provider interface
 // ──────────────────────────────────────────────────────────────────────────
@@ -170,6 +180,7 @@ export interface DataProvider {
 
   // ── Admin methods (require is_admin = true) ──
   adminGetMatchOverview(): Promise<AdminMatchOverview[]>
+  adminGetPredictionsForMatch(matchId: number): Promise<AdminPredictionForMatch[]>
   adminSaveProvisionalScore(matchId: number, home: number, away: number): Promise<void>
   adminConfirmAndScore(matchId: number): Promise<{ updated: number }>
   adminUnconfirm(matchId: number): Promise<void>
