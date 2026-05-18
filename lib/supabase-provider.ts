@@ -132,12 +132,72 @@ class SupabaseProvider implements DataProvider {
   }
 
   async getGroupStandings(groupLabel: string): Promise<GroupStanding[]> {
-    const { data } = await this.supabase
+    // Stap 1: haal bestaande stand op uit de view (alleen rows met gespeelde wedstrijden)
+    const { data: rawStandings, error: standingsErr } = await this.supabase
       .from('group_standings')
-      .select('*, team:teams(fifa_code)')
+      .select('*')
       .eq('group_label', groupLabel)
       .order('rank')
-    return (data || []).map((r: any) => ({ ...r, team_fifa: r.team?.fifa_code || '' }))
+
+    if (standingsErr) {
+      console.error('getGroupStandings error:', standingsErr)
+      return []
+    }
+
+    // Stap 2: haal alle teams uit deze groep via matches (zodat we niet-gespeelde teams ook tonen)
+    const { data: groupMatches } = await this.supabase
+      .from('matches')
+      .select('home_team_id, away_team_id, home_team:home_team_id(fifa_code), away_team:away_team_id(fifa_code)')
+      .eq('group_label', groupLabel)
+
+    // Verzamel unieke teams
+    const teamMap = new Map<number, string>()
+    for (const m of (groupMatches || []) as any[]) {
+      if (m.home_team?.fifa_code) teamMap.set(m.home_team_id, m.home_team.fifa_code)
+      if (m.away_team?.fifa_code) teamMap.set(m.away_team_id, m.away_team.fifa_code)
+    }
+
+    // Stap 3: voor teams met bestaande standings: gebruik de view-data
+    const standingsMap = new Map<number, GroupStanding>()
+    for (const r of (rawStandings || []) as any[]) {
+      standingsMap.set(r.team_id, {
+        group_label: r.group_label,
+        team_id: r.team_id,
+        team_fifa: teamMap.get(r.team_id) || '',
+        played: Number(r.played),
+        points: Number(r.points),
+        goals_for: Number(r.goals_for),
+        goals_against: Number(r.goals_against),
+        goal_difference: Number(r.goal_difference),
+        rank: Number(r.rank),
+      })
+    }
+
+    // Stap 4: voor teams zonder standing (nog niet gespeeld): voeg lege rij toe
+    let nextRank = standingsMap.size + 1
+    for (const [teamId, fifa] of teamMap) {
+      if (!standingsMap.has(teamId)) {
+        standingsMap.set(teamId, {
+          group_label: groupLabel,
+          team_id: teamId,
+          team_fifa: fifa,
+          played: 0,
+          points: 0,
+          goals_for: 0,
+          goals_against: 0,
+          goal_difference: 0,
+          rank: nextRank++,
+        })
+      }
+    }
+
+    // Sorteer: gespeelde teams op rank, niet-gespeelde alfabetisch
+    return Array.from(standingsMap.values()).sort((a, b) => {
+      if (a.played > 0 && b.played === 0) return -1
+      if (a.played === 0 && b.played > 0) return 1
+      if (a.played > 0) return a.rank - b.rank
+      return a.team_fifa.localeCompare(b.team_fifa)
+    })
   }
 
   async getMyPredictions(): Promise<Prediction[]> {
@@ -243,6 +303,33 @@ class SupabaseProvider implements DataProvider {
     })
     if (error) throw new Error(error.message)
     return { updated: Number(data || 0) }
+  }
+
+  async adminConfirmAllProvisional(stageId: number): Promise<{ updated: number }> {
+    const { data, error } = await this.supabase.rpc('admin_confirm_all_provisional', {
+      p_stage_id: stageId,
+    })
+    if (error) throw new Error(error.message)
+    return { updated: Number(data || 0) }
+  }
+
+  async getMatchPredictionAggregate(matchId: number): Promise<{
+    homeWins: number; draws: number; awayWins: number; total: number
+  }> {
+    const { data, error } = await this.supabase.rpc('get_match_prediction_aggregate', {
+      p_match_id: matchId,
+    })
+    if (error) {
+      console.error('aggregate error:', error)
+      return { homeWins: 0, draws: 0, awayWins: 0, total: 0 }
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    return {
+      homeWins: Number(row?.home_wins || 0),
+      draws: Number(row?.draws || 0),
+      awayWins: Number(row?.away_wins || 0),
+      total: Number(row?.total || 0),
+    }
   }
 
   async adminUnconfirm(matchId: number): Promise<void> {
