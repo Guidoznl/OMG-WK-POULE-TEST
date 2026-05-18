@@ -455,19 +455,29 @@ class MockProvider implements DataProvider {
     const played = fresh.filter(m =>
       m.group_label === groupLabel && m.home_score !== null && m.away_score !== null
     )
-    const tally: Record<number, { team_id: number; team_fifa: string; played: number; pts: number; gf: number; ga: number }> = {}
+    type Tally = {
+      team_id: number; team_fifa: string;
+      played: number; wins: number; draws: number; losses: number;
+      pts: number; gf: number; ga: number;
+    }
+    const tally: Record<number, Tally> = {}
 
     for (const m of played) {
       if (!m.home_team || !m.away_team || m.home_score === null || m.away_score === null) continue
       const h = m.home_team.id, a = m.away_team.id
-      tally[h] = tally[h] || { team_id: h, team_fifa: m.home_team.fifa_code, played: 0, pts: 0, gf: 0, ga: 0 }
-      tally[a] = tally[a] || { team_id: a, team_fifa: m.away_team.fifa_code, played: 0, pts: 0, gf: 0, ga: 0 }
+      tally[h] = tally[h] || { team_id: h, team_fifa: m.home_team.fifa_code, played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, ga: 0 }
+      tally[a] = tally[a] || { team_id: a, team_fifa: m.away_team.fifa_code, played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, ga: 0 }
       tally[h].played++; tally[a].played++
       tally[h].gf += m.home_score; tally[h].ga += m.away_score
       tally[a].gf += m.away_score; tally[a].ga += m.home_score
-      if (m.home_score > m.away_score) tally[h].pts += 3
-      else if (m.home_score < m.away_score) tally[a].pts += 3
-      else { tally[h].pts += 1; tally[a].pts += 1 }
+      if (m.home_score > m.away_score) {
+        tally[h].pts += 3; tally[h].wins++; tally[a].losses++
+      } else if (m.home_score < m.away_score) {
+        tally[a].pts += 3; tally[a].wins++; tally[h].losses++
+      } else {
+        tally[h].pts += 1; tally[a].pts += 1
+        tally[h].draws++; tally[a].draws++
+      }
     }
 
     // Include unplayed teams
@@ -479,7 +489,7 @@ class MockProvider implements DataProvider {
     for (const tid of Array.from(all)) {
       if (!tally[tid]) {
         const team = TEAMS.find(t => t.id === tid)!
-        tally[tid] = { team_id: tid, team_fifa: team.fifa_code, played: 0, pts: 0, gf: 0, ga: 0 }
+        tally[tid] = { team_id: tid, team_fifa: team.fifa_code, played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, ga: 0 }
       }
     }
 
@@ -494,6 +504,9 @@ class MockProvider implements DataProvider {
       team_id: t.team_id,
       team_fifa: t.team_fifa,
       played: t.played,
+      wins: t.wins,
+      draws: t.draws,
+      losses: t.losses,
       points: t.pts,
       goals_for: t.gf,
       goals_against: t.ga,
