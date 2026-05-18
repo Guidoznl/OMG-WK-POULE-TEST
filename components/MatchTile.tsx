@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Match, Prediction } from '@/lib/types'
 import { formatDateLocal, formatTimeLocal } from '@/lib/date-utils'
 import { FlagCircle } from './FlagCircle'
@@ -15,6 +16,7 @@ type Props = {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function MatchTile({ match, prediction, onSave }: Props) {
+  const router = useRouter()
   const [home, setHome] = useState<string>(prediction?.home_score?.toString() ?? '')
   const [away, setAway] = useState<string>(prediction?.away_score?.toString() ?? '')
   const [save, setSave] = useState<SaveState>('idle')
@@ -63,7 +65,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
       prediction.away_score === match.away_score
 
     return (
-      <div className="tile p-4 fade-in">
+      <Link href={`/match/${match.id}`} className="tile p-4 fade-in block hover:bg-ink-600 transition-colors">
         <TileHeader homeName={homeName} awayName={awayName} match={match} statusLabel="EINDSTAND" />
         <div className="flex items-center justify-center gap-3 mt-3">
           <div className="flex items-center gap-2 text-ink-50 font-display font-medium text-xl tabular-nums">
@@ -83,16 +85,15 @@ export function MatchTile({ match, prediction, onSave }: Props) {
             )}
           </div>
         )}
-        <DetailLink match={match} />
         <LocationLabel match={match} />
-      </div>
+      </Link>
     )
   }
 
   // ═══ IN PROGRESS — match started ════════════════════════════════════════
   if (match.status === 'in_progress') {
     return (
-      <div className="tile tile-locked p-4 fade-in">
+      <Link href={`/match/${match.id}`} className="tile tile-locked p-4 fade-in block hover:opacity-80 transition-opacity">
         <TileHeader homeName={homeName} awayName={awayName} match={match} statusLabel="GESTART" />
         {prediction ? (
           <>
@@ -108,16 +109,15 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         ) : (
           <p className="text-center text-ink-400 text-xs mt-3">Geen voorspelling ingediend</p>
         )}
-        <DetailLink match={match} />
         <LocationLabel match={match} />
-      </div>
+      </Link>
     )
   }
 
   // ═══ LOCKED — 2h window before kickoff ══════════════════════════════════
   if (match.status === 'locked') {
     return (
-      <div className="tile tile-locked p-4 fade-in border border-ink-600">
+      <Link href={`/match/${match.id}`} className="tile tile-locked p-4 fade-in border border-ink-600 block hover:opacity-80 transition-opacity">
         <TileHeader homeName={homeName} awayName={awayName} match={match} statusLabel="VERGRENDELD" />
         {prediction ? (
           <div className="flex items-center justify-center gap-3 mt-3">
@@ -130,20 +130,27 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         ) : (
           <p className="text-center text-ink-400 text-xs mt-3">Te laat — geen voorspelling mogelijk</p>
         )}
-        <DetailLink match={match} />
         <LocationLabel match={match} />
-      </div>
+      </Link>
     )
   }
 
   // ═══ OPEN — editable ════════════════════════════════════════════════════
   // savedRecently => show green border for 4s
-  const tileClasses = `tile p-4 fade-in transition-all duration-300 ${
+  const tileClasses = `tile p-4 fade-in transition-all duration-300 cursor-pointer hover:bg-ink-600 ${
     savedRecently ? 'ring-2 ring-accent-mint ring-offset-2 ring-offset-ink-950' : ''
   }`
 
+  // Klik ergens op de tile (behalve op input/label) → naar detailpagina
+  function handleTileClick(e: React.MouseEvent<HTMLDivElement>) {
+    // Voorkom navigatie als de klik in een input/label terechtkomt
+    const target = e.target as HTMLElement
+    if (target.closest('input, label')) return
+    router.push(`/match/${match.id}`)
+  }
+
   return (
-    <div className={tileClasses}>
+    <div className={tileClasses} onClick={handleTileClick}>
       <TileHeader homeName={homeName} awayName={awayName} match={match} />
       <div className="flex items-center justify-center gap-2 mt-3">
         <input
@@ -152,6 +159,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
           inputMode="numeric"
           value={home}
           onChange={e => setHome(e.target.value)}
+          onClick={e => e.stopPropagation()}
           placeholder="–"
           aria-label={`Score ${homeName}`}
           className="w-12 h-10 text-center text-base font-display font-medium tabular-nums"
@@ -163,6 +171,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
           inputMode="numeric"
           value={away}
           onChange={e => setAway(e.target.value)}
+          onClick={e => e.stopPropagation()}
           placeholder="–"
           aria-label={`Score ${awayName}`}
           className="w-12 h-10 text-center text-base font-display font-medium tabular-nums"
@@ -178,7 +187,6 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         )}
         {save === 'error' && <span className="text-accent-coral text-[11px]">Fout — probeer opnieuw</span>}
       </div>
-      <DetailLink match={match} />
       <LocationLabel match={match} />
     </div>
   )
@@ -216,32 +224,6 @@ function TileHeader({ homeName, awayName, match, statusLabel }: {
         <FlagCircle isoCode={match.away_team?.iso_code || null} />
       </div>
     </div>
-  )
-}
-
-/**
- * "Bekijk details" knop, geplaatst onderaan een wedstrijdtile.
- * Linkt naar de detailpagina van de wedstrijd (alle voorspellingen, probability).
- */
-function DetailLink({ match }: { match: Match }) {
-  return (
-    <Link
-      href={`/match/${match.id}`}
-      className="flex items-center justify-center gap-1.5 mt-3 pt-2.5 border-t border-ink-600 text-ink-400 hover:text-accent-orange transition-colors text-xs"
-    >
-      <InfoIcon />
-      <span>Bekijk details &amp; voorspellingen</span>
-    </Link>
-  )
-}
-
-function InfoIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12.01" y2="8" />
-    </svg>
   )
 }
 
