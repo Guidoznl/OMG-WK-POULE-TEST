@@ -83,6 +83,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
             )}
           </div>
         )}
+        <DetailLink match={match} />
         <LocationLabel match={match} />
       </div>
     )
@@ -107,6 +108,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         ) : (
           <p className="text-center text-ink-400 text-xs mt-3">Geen voorspelling ingediend</p>
         )}
+        <DetailLink match={match} />
         <LocationLabel match={match} />
       </div>
     )
@@ -128,6 +130,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         ) : (
           <p className="text-center text-ink-400 text-xs mt-3">Te laat — geen voorspelling mogelijk</p>
         )}
+        <DetailLink match={match} />
         <LocationLabel match={match} />
       </div>
     )
@@ -175,6 +178,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         )}
         {save === 'error' && <span className="text-accent-coral text-[11px]">Fout — probeer opnieuw</span>}
       </div>
+      <DetailLink match={match} />
       <LocationLabel match={match} />
     </div>
   )
@@ -189,45 +193,51 @@ function TileHeader({ homeName, awayName, match, statusLabel }: {
   statusLabel?: string
 }) {
   return (
-    <div className="relative">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <div className="flex items-center gap-2 justify-self-start min-w-0">
-          <FlagCircle isoCode={match.home_team?.iso_code || null} />
-          <span className="text-ink-50 text-sm font-medium truncate">{homeName}</span>
-        </div>
-        <div className="text-center text-ink-400 text-[11px] leading-tight">
-          {statusLabel ? (
-            <div className="flex items-center justify-center gap-1 text-ink-500">
-              {statusLabel === 'VERGRENDELD' && <LockIcon />}
-              <span className="text-[10px] tracking-wider">{statusLabel}</span>
-            </div>
-          ) : (
-            <>
-              <div>{formatDateLocal(match.kickoff_ams)}</div>
-              <div>{formatTimeLocal(match.kickoff_ams)} uur</div>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2 justify-self-end min-w-0">
-          <span className="text-ink-50 text-sm font-medium truncate">{awayName}</span>
-          <FlagCircle isoCode={match.away_team?.iso_code || null} />
-        </div>
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="flex items-center gap-2 justify-self-start min-w-0">
+        <FlagCircle isoCode={match.home_team?.iso_code || null} />
+        <span className="text-ink-50 text-sm font-medium truncate">{homeName}</span>
       </div>
-      {/* Details-link rechtsboven, los van de grid-layout */}
-      <Link
-        href={`/match/${match.id}`}
-        title="Bekijk details en voorspellingen van anderen"
-        className="absolute -top-1 -right-1 p-1 text-ink-500 hover:text-accent-orange transition-colors"
-      >
-        <InfoIcon />
-      </Link>
+      <div className="text-center text-ink-400 text-[11px] leading-tight">
+        {statusLabel ? (
+          <div className="flex items-center justify-center gap-1 text-ink-500">
+            {statusLabel === 'VERGRENDELD' && <LockIcon />}
+            <span className="text-[10px] tracking-wider">{statusLabel}</span>
+          </div>
+        ) : (
+          <>
+            <div>{formatDateLocal(match.kickoff_ams)}</div>
+            <div>{formatTimeLocal(match.kickoff_ams)} uur</div>
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-2 justify-self-end min-w-0">
+        <span className="text-ink-50 text-sm font-medium truncate">{awayName}</span>
+        <FlagCircle isoCode={match.away_team?.iso_code || null} />
+      </div>
     </div>
+  )
+}
+
+/**
+ * "Bekijk details" knop, geplaatst onderaan een wedstrijdtile.
+ * Linkt naar de detailpagina van de wedstrijd (alle voorspellingen, probability).
+ */
+function DetailLink({ match }: { match: Match }) {
+  return (
+    <Link
+      href={`/match/${match.id}`}
+      className="flex items-center justify-center gap-1.5 mt-3 pt-2.5 border-t border-ink-600 text-ink-400 hover:text-accent-orange transition-colors text-xs"
+    >
+      <InfoIcon />
+      <span>Bekijk details &amp; voorspellingen</span>
+    </Link>
   )
 }
 
 function InfoIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
       <line x1="12" y1="8" x2="12.01" y2="8" />
