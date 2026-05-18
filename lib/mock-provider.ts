@@ -765,14 +765,15 @@ class MockProvider implements DataProvider {
     for (const user of TEST_USERS) {
       const userPreds = this.predictions[user.id] || []
       const myPred = userPreds.find(p => p.match_id === matchId)
-      if (!myPred) continue
       out.push({
         user_id: user.id,
         display_name: user.display_name,
-        home_score: myPred.home_score,
-        away_score: myPred.away_score,
-        points_awarded: myPred.points_awarded,
+        home_score: myPred?.home_score ?? null,
+        away_score: myPred?.away_score ?? null,
+        points_awarded: myPred?.points_awarded ?? null,
+        submitted_at: myPred?.submitted_at ?? null,
         is_self: user.id === this.currentUserId,
+        has_predicted: !!myPred,
       })
     }
     return out.sort((a, b) => a.display_name.localeCompare(b.display_name))
