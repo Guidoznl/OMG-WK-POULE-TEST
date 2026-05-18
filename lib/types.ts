@@ -154,6 +154,16 @@ export type AdminPredictionForMatch = {
   submitted_at: string
 }
 
+// Public prediction visible to all users on the match detail page
+export type PublicMatchPrediction = {
+  user_id: string
+  display_name: string
+  home_score: number
+  away_score: number
+  points_awarded: number | null
+  is_self: boolean
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Data provider interface
 // ──────────────────────────────────────────────────────────────────────────
@@ -191,10 +201,11 @@ export interface DataProvider {
   adminSetBonusCorrectAnswer(questionId: number, correctAnswer: string): Promise<void>
   adminScoreBonusQuestion(questionId: number): Promise<{ updated: number }>
 
-  // ── Public aggregate (post-kickoff only) ──
+  // ── Public aggregate + per-player predictions (visible to all users) ──
   getMatchPredictionAggregate(matchId: number): Promise<{
     homeWins: number; draws: number; awayWins: number; total: number
   }>
+  getMatchPredictionsPublic(matchId: number): Promise<PublicMatchPrediction[]>
 
   devSwitchUser?(userId: string): Promise<void>
   devListUsers?(): Promise<Profile[]>
