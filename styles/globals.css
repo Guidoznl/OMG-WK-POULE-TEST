@@ -2,108 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Flag icons CSS from the npm package */
 @import 'flag-icons/css/flag-icons.min.css';
 
 :root {
+  /* Font stacks — system fallbacks since we don't load remote fonts in dev */
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-
-  /* Theme variables — defaults to DARK mode */
-  --c-bg-page:    #0A0F1F;
-  --c-bg-surface: #0E1429;
-  --c-bg-raised:  #151B33;
-  --c-bg-tile:    #1A2342;
-  --c-border:     #2A3556;
-  --c-text-muted: #4A5478;
-  --c-text-sub:   #6B7494;
-  --c-text-200:   #C5CCE3;
-  --c-text-50:    #FFFFFF;
-
-  /* Accent color — switches between orange (dark) and pink (pink mode) */
-  --c-accent:        #FF6B1A;
-  --c-accent-fg:     #0A0F1F;
-  --c-accent-soft:   rgba(255, 107, 26, 0.20);
-  --c-accent-border: rgba(255, 107, 26, 0.30);
-
-  /* Pitch/field motif color (used in headers, tile decorations) */
-  --c-pitch-line: rgba(255, 255, 255, 0.04);
-}
-
-/* Pink mode: same dark base + warm pink accent */
-html[data-theme="pink"] {
-  --c-bg-page:    #1C0E1F;
-  --c-bg-surface: #25132B;
-  --c-bg-raised:  #2E1735;
-  --c-bg-tile:    #38203F;
-  --c-border:     #5A3A60;
-  --c-text-muted: #7C5A82;
-  --c-text-sub:   #A88BAE;
-
-  --c-accent:        #FF4FBF;
-  --c-accent-fg:     #FFFFFF;
-  --c-accent-soft:   rgba(255, 79, 191, 0.20);
-  --c-accent-border: rgba(255, 79, 191, 0.35);
-
-  --c-pitch-line: rgba(255, 79, 191, 0.06);
 }
 
 @layer base {
   html, body {
-    color: var(--c-text-50);
-    background: var(--c-bg-page);
+    @apply bg-ink-950 text-ink-50 antialiased;
     font-family: var(--font-inter);
     min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
   }
 
-  /* Subtle pitch/field background pattern — gives the whole app a slight football feel.
-     Uses very faint horizontal stripes (like mowing patterns on a football pitch)
-     plus the existing radial vignette. Almost invisible but adds depth. */
-  body {
-    background-image:
-      repeating-linear-gradient(
-        180deg,
-        transparent 0px,
-        transparent 60px,
-        var(--c-pitch-line) 60px,
-        var(--c-pitch-line) 61px
-      ),
-      radial-gradient(circle at 50% 0%, var(--c-pitch-line) 0%, transparent 60%),
-      linear-gradient(180deg, var(--c-bg-page) 0%, var(--c-bg-page) 100%);
-  }
-
-  /* Scrollbar */
+  /* Custom scrollbar — subtle, on-brand */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--c-text-muted); }
+  ::-webkit-scrollbar-thumb { background: #2A3556; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4A5478; }
 
   /* Inputs */
   input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
-    background-color: var(--c-bg-page);
-    border: 1px solid var(--c-border);
-    color: var(--c-text-50);
-    border-radius: 0.5rem;
-    transition: all 0.15s;
-  }
-  input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--c-accent);
-    border-color: transparent;
+    @apply bg-ink-950 border border-ink-600 text-ink-50 rounded-lg;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-transparent;
+    @apply transition-all duration-150;
   }
 
-  /* Autofill override (Chrome/Safari) — adapt to current theme */
+  /* Disable browser autofill background override (Chrome/Safari).
+     Without this, autofilled fields show as white-on-white. The trick is the
+     long transition delay — the autofill style only briefly flashes before
+     reverting to our actual styling. */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px var(--c-bg-page) inset !important;
-    -webkit-text-fill-color: var(--c-text-50) !important;
-    caret-color: var(--c-text-50);
+    -webkit-box-shadow: 0 0 0 30px #0A0F1F inset !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    caret-color: #FFFFFF;
     transition: background-color 5000s ease-in-out 0s;
   }
 
+  /* Hide number input arrows */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -113,36 +56,44 @@ html[data-theme="pink"] {
 }
 
 @layer components {
-  /* Theme-aware utility classes — components can use these instead of bg-ink-*
-     so they switch with the theme. We keep the old @apply rules working too
-     by mapping ink-* to the variables via the Tailwind preset (done in JS), 
-     but the cleanest approach is to use these in new components. */
-  .surface-tile {
-    background-color: var(--c-bg-tile);
-    border-radius: 14px;
-    transition: all 0.2s;
+  /* Flag wrapper to make circular flags */
+  .fi-circle {
+    @apply inline-block w-9 h-9 rounded-full overflow-hidden bg-ink-700 border border-ink-600;
+    background-size: cover;
+    background-position: center;
   }
-  .surface-locked {
-    background-color: var(--c-bg-raised);
-    opacity: 0.6;
+  .fi-circle.fi-sm { @apply w-6 h-6; }
+
+  /* Tile transitions */
+  .tile {
+    @apply bg-ink-700 rounded-tile transition-all duration-200;
+  }
+  .tile-locked {
+    @apply bg-ink-800 opacity-60;
   }
 
-  /* Pitch-stripe accent — a thin horizontal gradient that evokes the chalk
-     centre line on a football pitch. Use as a header decoration. */
-  .pitch-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--c-accent) 50%, transparent 100%);
-    opacity: 0.4;
+  /* Tab button */
+  .tab-btn {
+    @apply px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors;
+    @apply bg-ink-700 text-ink-400 hover:text-ink-50;
+  }
+  .tab-btn-active {
+    @apply bg-ink-50 text-ink-950 hover:text-ink-950;
+  }
+  .tab-btn-done {
+    @apply text-ink-50;
   }
 
-  /* Pulse animation */
+  /* Pulse animation for live status */
   @keyframes liveDot {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
-  .live-dot { animation: liveDot 1.5s ease-in-out infinite; }
+  .live-dot {
+    animation: liveDot 1.5s ease-in-out infinite;
+  }
 
-  /* Fade-in */
+  /* Subtle fade-in for content */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
