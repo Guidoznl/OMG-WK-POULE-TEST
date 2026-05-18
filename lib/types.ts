@@ -183,12 +183,18 @@ export interface DataProvider {
   adminGetPredictionsForMatch(matchId: number): Promise<AdminPredictionForMatch[]>
   adminSaveProvisionalScore(matchId: number, home: number, away: number): Promise<void>
   adminConfirmAndScore(matchId: number): Promise<{ updated: number }>
+  adminConfirmAllProvisional(stageId: number): Promise<{ updated: number }>
   adminUnconfirm(matchId: number): Promise<void>
   adminClearScore(matchId: number): Promise<void>
   adminGetBonusAnswers(): Promise<AdminBonusAnswer[]>
   adminNormalizeAnswer(userId: string, questionId: number, normalized: string): Promise<void>
   adminSetBonusCorrectAnswer(questionId: number, correctAnswer: string): Promise<void>
   adminScoreBonusQuestion(questionId: number): Promise<{ updated: number }>
+
+  // ── Public aggregate (post-kickoff only) ──
+  getMatchPredictionAggregate(matchId: number): Promise<{
+    homeWins: number; draws: number; awayWins: number; total: number
+  }>
 
   devSwitchUser?(userId: string): Promise<void>
   devListUsers?(): Promise<Profile[]>
