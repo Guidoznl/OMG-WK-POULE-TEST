@@ -158,7 +158,7 @@ export default function PredictionsPage() {
                 {matchdayGroups.flatMap(mg => mg.matches).filter(m => predictions.find(p => p.match_id === m.id)).length} van {matchdayGroups.flatMap(mg => mg.matches).length} ingevuld
               </span>
             </div>
-            <GroupStandings groupLabel={activeGroup} />
+            <GroupStandings groupLabel={activeGroup} matches={matches} predictions={predictions} />
           </>
         ) : (
           <h2 className="font-display text-lg font-medium text-ink-50 mb-4">
