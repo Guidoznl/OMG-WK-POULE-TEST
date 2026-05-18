@@ -114,6 +114,25 @@ export default function AdminHomePage() {
           <StatCard label="Bevestigd" value={stats.confirmed} active={filter==='confirmed'} onClick={() => setFilter('confirmed')} tone="mint" />
         </div>
 
+        {/* Bulk confirm — alleen tonen als er voorlopige uitslagen zijn */}
+        {stats.provisional > 0 && (
+          <button
+            onClick={async () => {
+              if (!confirm(`Bevestig alle ${stats.provisional} voorlopige uitslagen in deze fase? Punten worden direct uitgedeeld.`)) return
+              try {
+                const res = await getDataProvider().adminConfirmAllProvisional(activeStage)
+                await reload()
+                alert(`${res.updated} wedstrijden bevestigd.`)
+              } catch (err: any) {
+                alert(err.message || 'Fout bij bulk bevestigen')
+              }
+            }}
+            className="w-full mb-4 py-2.5 bg-accent-orange hover:brightness-110 text-ink-950 text-sm font-display font-medium rounded-tile transition-all"
+          >
+            Bevestig alle {stats.provisional} voorlopige uitslagen
+          </button>
+        )}
+
         {/* Match list */}
         <div className="space-y-2">
           {visible.length === 0 ? (
