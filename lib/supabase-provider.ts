@@ -346,7 +346,9 @@ class SupabaseProvider implements DataProvider {
       home_score: row.home_score,
       away_score: row.away_score,
       points_awarded: row.points_awarded,
+      submitted_at: row.submitted_at,
       is_self: row.is_self,
+      has_predicted: row.has_predicted,
     }))
   }
 
