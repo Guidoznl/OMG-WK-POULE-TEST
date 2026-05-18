@@ -79,33 +79,45 @@ export function GroupStandings({ groupLabel, matches, predictions }: Props) {
             </p>
           ) : (
             <>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-ink-500 text-[10px] tracking-wider uppercase">
-                    <th className="text-left font-normal pb-1.5">#</th>
-                    <th className="text-left font-normal pb-1.5">Team</th>
-                    <th className="text-center font-normal pb-1.5">G</th>
-                    <th className="text-center font-normal pb-1.5">DV</th>
-                    <th className="text-right font-normal pb-1.5">Pt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map(s => (
-                    <tr key={s.team_id} className="border-t border-ink-600">
-                      <td className="py-1.5 text-ink-200 tabular-nums">{s.rank}</td>
-                      <td className="py-1.5 text-ink-50 font-medium">{s.team_fifa}</td>
-                      <td className="text-center py-1.5 text-ink-200 tabular-nums">{s.played}</td>
-                      <td className={`text-center py-1.5 tabular-nums ${
-                        s.goal_difference > 0 ? 'text-accent-mint' :
-                        s.goal_difference < 0 ? 'text-accent-coral' : 'text-ink-400'
-                      }`}>
-                        {s.goal_difference > 0 ? '+' : ''}{s.goal_difference}
-                      </td>
-                      <td className="text-right py-1.5 text-ink-50 font-medium tabular-nums">{s.points}</td>
+              <div className="overflow-x-auto -mx-3 px-3">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-ink-500 text-[10px] tracking-wider uppercase">
+                      <th className="text-left font-normal pb-1.5 pr-1">#</th>
+                      <th className="text-left font-normal pb-1.5">Team</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Gespeeld">Gs</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Winst">W</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Gelijk">Gl</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Verlies">V</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Doelpunten voor">DV</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Doelpunten tegen">DT</th>
+                      <th className="text-center font-normal pb-1.5 px-1" title="Doelsaldo">+/-</th>
+                      <th className="text-right font-normal pb-1.5 pl-1">Pt</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {standings.map(s => (
+                      <tr key={s.team_id} className="border-t border-ink-600">
+                        <td className="py-1.5 pr-1 text-ink-200 tabular-nums">{s.rank}</td>
+                        <td className="py-1.5 text-ink-50 font-medium">{s.team_fifa}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.played}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.wins}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.draws}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.losses}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.goals_for}</td>
+                        <td className="text-center py-1.5 px-1 text-ink-200 tabular-nums">{s.goals_against}</td>
+                        <td className={`text-center py-1.5 px-1 tabular-nums ${
+                          s.goal_difference > 0 ? 'text-accent-mint' :
+                          s.goal_difference < 0 ? 'text-accent-coral' : 'text-ink-400'
+                        }`}>
+                          {s.goal_difference > 0 ? '+' : ''}{s.goal_difference}
+                        </td>
+                        <td className="text-right py-1.5 pl-1 text-ink-50 font-medium tabular-nums">{s.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {/* Info-line onderin */}
               {tab === 'official' && !anyPlayed && (
@@ -144,26 +156,22 @@ function computeVirtualStandings(
     team_id: number
     team_fifa: string
     played: number
+    wins: number
+    draws: number
+    losses: number
     points: number
     goals_for: number
     goals_against: number
   }
+  const newAcc = (id: number, fifa: string): StandingAcc => ({
+    team_id: id, team_fifa: fifa,
+    played: 0, wins: 0, draws: 0, losses: 0, points: 0, goals_for: 0, goals_against: 0,
+  })
+
   const teamMap = new Map<number, StandingAcc>()
   for (const m of groupMatches) {
-    if (m.home_team) {
-      teamMap.set(m.home_team.id, teamMap.get(m.home_team.id) || {
-        team_id: m.home_team.id,
-        team_fifa: m.home_team.fifa_code,
-        played: 0, points: 0, goals_for: 0, goals_against: 0,
-      })
-    }
-    if (m.away_team) {
-      teamMap.set(m.away_team.id, teamMap.get(m.away_team.id) || {
-        team_id: m.away_team.id,
-        team_fifa: m.away_team.fifa_code,
-        played: 0, points: 0, goals_for: 0, goals_against: 0,
-      })
-    }
+    if (m.home_team) teamMap.set(m.home_team.id, teamMap.get(m.home_team.id) || newAcc(m.home_team.id, m.home_team.fifa_code))
+    if (m.away_team) teamMap.set(m.away_team.id, teamMap.get(m.away_team.id) || newAcc(m.away_team.id, m.away_team.fifa_code))
   }
 
   // 3. Loop over voorspellingen voor deze groep en update standings
@@ -183,12 +191,12 @@ function computeVirtualStandings(
     away.goals_against += pred.home_score
 
     if (pred.home_score > pred.away_score) {
-      home.points += 3
+      home.points += 3; home.wins++; away.losses++
     } else if (pred.home_score < pred.away_score) {
-      away.points += 3
+      away.points += 3; away.wins++; home.losses++
     } else {
-      home.points += 1
-      away.points += 1
+      home.points += 1; away.points += 1
+      home.draws++; away.draws++
     }
   }
 
@@ -207,6 +215,9 @@ function computeVirtualStandings(
     team_id: s.team_id,
     team_fifa: s.team_fifa,
     played: s.played,
+    wins: s.wins,
+    draws: s.draws,
+    losses: s.losses,
     points: s.points,
     goals_for: s.goals_for,
     goals_against: s.goals_against,
