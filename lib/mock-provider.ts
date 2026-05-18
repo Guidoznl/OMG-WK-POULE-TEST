@@ -746,15 +746,8 @@ class MockProvider implements DataProvider {
     homeWins: number; draws: number; awayWins: number; total: number
   }> {
     this.init()
-    // In mock mode: alleen tonen na kickoff (consistent met productie)
-    const match = MATCHES_RAW.find(m => m.id === matchId)
-    if (!match) return { homeWins: 0, draws: 0, awayWins: 0, total: 0 }
-    const kickoffMs = NOW + match.offset * 3600_000
-    const user = this.getUserWithTermsOverride(this.currentUserId)
-    if (Date.now() < kickoffMs && !user?.is_admin) {
-      return { homeWins: 0, draws: 0, awayWins: 0, total: 0 }
-    }
-
+    // Aggregate is altijd zichtbaar — gebruikers mogen elkaars voorspellingen
+    // zien zodra ze zijn ingediend (zie ontwerpkeuze).
     let h = 0, d = 0, a = 0
     for (const userId of Object.keys(this.predictions)) {
       const p = this.predictions[userId].find(pp => pp.match_id === matchId)
@@ -764,6 +757,25 @@ class MockProvider implements DataProvider {
       else d++
     }
     return { homeWins: h, draws: d, awayWins: a, total: h + d + a }
+  }
+
+  async getMatchPredictionsPublic(matchId: number): Promise<any[]> {
+    this.init()
+    const out: any[] = []
+    for (const user of TEST_USERS) {
+      const userPreds = this.predictions[user.id] || []
+      const myPred = userPreds.find(p => p.match_id === matchId)
+      if (!myPred) continue
+      out.push({
+        user_id: user.id,
+        display_name: user.display_name,
+        home_score: myPred.home_score,
+        away_score: myPred.away_score,
+        points_awarded: myPred.points_awarded,
+        is_self: user.id === this.currentUserId,
+      })
+    }
+    return out.sort((a, b) => a.display_name.localeCompare(b.display_name))
   }
 
   async adminUnconfirm(matchId: number): Promise<void> {
