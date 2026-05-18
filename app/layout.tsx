@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
-import { ThemeProvider } from '@/components/ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'OppoSuits WK Poule \'26',
@@ -9,10 +8,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nl" data-theme="dark">
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+    <html lang="nl">
+      <body>{children}</body>
     </html>
   )
 }
