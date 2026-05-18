@@ -332,6 +332,24 @@ class SupabaseProvider implements DataProvider {
     }
   }
 
+  async getMatchPredictionsPublic(matchId: number): Promise<any[]> {
+    const { data, error } = await this.supabase.rpc('get_match_predictions_public', {
+      p_match_id: matchId,
+    })
+    if (error) {
+      console.error('getMatchPredictionsPublic error:', error)
+      return []
+    }
+    return (data || []).map((row: any) => ({
+      user_id: row.user_id,
+      display_name: row.display_name,
+      home_score: row.home_score,
+      away_score: row.away_score,
+      points_awarded: row.points_awarded,
+      is_self: row.is_self,
+    }))
+  }
+
   async adminUnconfirm(matchId: number): Promise<void> {
     const { error } = await this.supabase.rpc('admin_unconfirm', {
       p_match_id: matchId,
