@@ -75,12 +75,15 @@ export default function MatchDetailPage() {
     ? computeMatchOdds(match.home_team.fifa_code, match.away_team.fifa_code)
     : null
 
-  // OMG aggregate berekenen client-side uit alle voorspellingen
+  // OMG aggregate: alleen tellen waar daadwerkelijk een voorspelling is
   const aggregate = (() => {
     let h = 0, d = 0, a = 0
     for (const p of allPredictions) {
-      if (p.home_score > p.away_score) h++
-      else if (p.home_score < p.away_score) a++
+      if (!p.has_predicted) continue
+      const homeS = p.home_score as number
+      const awayS = p.away_score as number
+      if (homeS > awayS) h++
+      else if (homeS < awayS) a++
       else d++
     }
     const total = h + d + a
@@ -93,9 +96,44 @@ export default function MatchDetailPage() {
     }
   })()
 
-  // Mijn eigen voorspelling apart tonen, anderen alfabetisch
-  const me = allPredictions.find(p => p.is_self) || null
-  const others = allPredictions.filter(p => !p.is_self)
+  // Sortering — verschilt of de uitslag bekend is of niet.
+  //
+  // Vóór uitslag (geen confirmed result):
+  //   - Eerst de voorspellingen op chronologische volgorde van indiening
+  //   - Daarna spelers zonder voorspelling, alfabetisch
+  //
+  // Ná uitslag:
+  //   - Eerst op behaalde punten (aflopend)
+  //   - Bij gelijke punten: alfabetisch
+  //   - Spelers zonder voorspelling onderaan, alfabetisch
+  const hasResultConfirmed = match.home_score !== null && match.away_score !== null
+  const sortedPredictions = (() => {
+    const withPrediction = allPredictions.filter(p => p.has_predicted)
+    const withoutPrediction = allPredictions
+      .filter(p => !p.has_predicted)
+      .sort((a, b) => a.display_name.localeCompare(b.display_name))
+
+    if (hasResultConfirmed) {
+      withPrediction.sort((a, b) => {
+        const aPts = a.points_awarded ?? 0
+        const bPts = b.points_awarded ?? 0
+        if (bPts !== aPts) return bPts - aPts
+        return a.display_name.localeCompare(b.display_name)
+      })
+    } else {
+      withPrediction.sort((a, b) => {
+        // submitted_at is een ISO string, lexicografisch sorteren werkt
+        const aTime = a.submitted_at || ''
+        const bTime = b.submitted_at || ''
+        return aTime.localeCompare(bTime)
+      })
+    }
+
+    return [...withPrediction, ...withoutPrediction]
+  })()
+
+  // Eigen voorspelling apart highlighten — vinden via is_self
+  const meInList = sortedPredictions.find(p => p.is_self)
 
   return (
     <>
@@ -193,23 +231,15 @@ export default function MatchDetailPage() {
             </div>
           )}
 
-          {/* Individuele voorspellingen */}
-          {allPredictions.length > 0 && (
+          {/* Individuele voorspellingen — gesorteerde volgorde */}
+          {sortedPredictions.length > 0 && (
             <div className="space-y-1">
-              {/* Eerst zelf */}
-              {me && (
-                <PredictionRow
-                  prediction={me}
-                  match={match}
-                  highlight
-                />
-              )}
-              {/* Daarna de anderen */}
-              {others.map(p => (
+              {sortedPredictions.map(p => (
                 <PredictionRow
                   key={p.user_id}
                   prediction={p}
                   match={match}
+                  highlight={p.is_self}
                 />
               ))}
             </div>
@@ -241,12 +271,24 @@ function PredictionRow({ prediction, match, highlight }: {
   highlight?: boolean
 }) {
   const hasResult = match.home_score !== null && match.away_score !== null
-  const isExact = hasResult &&
+  const isExact = hasResult && prediction.has_predicted &&
     prediction.home_score === match.home_score &&
     prediction.away_score === match.away_score
-  const isCorrectOutcome = hasResult && !isExact &&
-    Math.sign(prediction.home_score - prediction.away_score) ===
-    Math.sign((match.home_score as number) - (match.away_score as number))
+
+  // Niet-voorspeld: subtielere weergave
+  if (!prediction.has_predicted) {
+    return (
+      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
+        highlight ? 'bg-ink-700 ring-1 ring-accent-orange/40' : 'bg-ink-800 opacity-60'
+      }`}>
+        <span className="flex-1 text-ink-200 text-sm truncate">
+          {prediction.display_name}
+          {highlight && <span className="ml-1.5 text-[10px] text-accent-orange">(jij)</span>}
+        </span>
+        <span className="text-ink-500 text-xs italic">Nog niet voorspeld</span>
+      </div>
+    )
+  }
 
   return (
     <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
@@ -260,7 +302,6 @@ function PredictionRow({ prediction, match, highlight }: {
         {prediction.home_score}–{prediction.away_score}
       </span>
       {isExact && <span className="px-1.5 py-0.5 rounded bg-accent-mint/20 text-accent-mint text-[10px] font-medium">EXACT</span>}
-      {isCorrectOutcome && <span className="px-1.5 py-0.5 rounded bg-accent-amber/20 text-accent-amber text-[10px] font-medium">UITSLAG</span>}
       {prediction.points_awarded !== null && prediction.points_awarded > 0 && (
         <span className="font-display font-medium text-accent-orange text-sm w-10 text-right">+{prediction.points_awarded}</span>
       )}
