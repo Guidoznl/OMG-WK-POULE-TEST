@@ -73,6 +73,9 @@ export type GroupStanding = {
   team_id: number
   team_fifa: string
   played: number
+  wins: number
+  draws: number
+  losses: number
   points: number
   goals_for: number
   goals_against: number
