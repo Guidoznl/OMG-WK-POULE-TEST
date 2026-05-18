@@ -154,14 +154,18 @@ export type AdminPredictionForMatch = {
   submitted_at: string
 }
 
-// Public prediction visible to all users on the match detail page
+// Public prediction visible to all users on the match detail page.
+// home_score/away_score/points_awarded/submitted_at zijn NULL als de gebruiker
+// nog geen voorspelling heeft ingediend (has_predicted = false).
 export type PublicMatchPrediction = {
   user_id: string
   display_name: string
-  home_score: number
-  away_score: number
+  home_score: number | null
+  away_score: number | null
   points_awarded: number | null
+  submitted_at: string | null
   is_self: boolean
+  has_predicted: boolean
 }
 
 // ──────────────────────────────────────────────────────────────────────────
