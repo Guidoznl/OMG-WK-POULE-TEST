@@ -5,27 +5,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Theme-aware "ink" palette. Maps to CSS variables so it switches when
-        // [data-theme="pink"] is set on <html>.
         ink: {
-          950: 'var(--c-bg-page)',
-          900: 'var(--c-bg-surface)',
-          800: 'var(--c-bg-raised)',
-          700: 'var(--c-bg-tile)',
-          600: 'var(--c-border)',
-          500: 'var(--c-text-muted)',
-          400: 'var(--c-text-sub)',
-          200: 'var(--c-text-200)',
-          50:  'var(--c-text-50)',
+          950: '#0A0F1F',  // page bg
+          900: '#0E1429',  // surface bg
+          800: '#151B33',  // raised surface
+          700: '#1A2342',  // tile bg
+          600: '#2A3556',  // border
+          500: '#4A5478',  // muted text
+          400: '#6B7494',  // secondary text
+          200: '#C5CCE3',  // light text
+          50:  '#FFFFFF',  // primary text
         },
         accent: {
-          // "orange" is the primary accent. In pink theme it becomes pink via
-          // the --c-accent CSS variable. Component code stays unchanged.
-          orange: 'var(--c-accent)',
-          // Status colors stay constant across themes (success = green, etc.)
-          mint:   '#3FD37F',
-          coral:  '#E66060',
-          amber:  '#F2B544',
+          orange: '#FF6B1A',  // OppoSuits hero accent
+          mint:   '#3FD37F',  // success
+          coral:  '#E66060',  // danger
+          amber:  '#F2B544',  // warning
         },
       },
       fontFamily: {
