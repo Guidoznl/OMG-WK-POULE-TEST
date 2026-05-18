@@ -728,6 +728,44 @@ class MockProvider implements DataProvider {
     return { updated }
   }
 
+  async adminConfirmAllProvisional(stageId: number): Promise<{ updated: number }> {
+    await this.requireAdmin()
+    let total = 0
+    for (const id of Object.keys(this.adminResults).map(Number)) {
+      const raw = MATCHES_RAW.find(m => m.id === id)
+      if (!raw || raw.stage_id !== stageId) continue
+      const entry = this.adminResults[id]
+      if (!entry || entry.state !== 'provisional') continue
+      await this.adminConfirmAndScore(id)
+      total++
+    }
+    return { updated: total }
+  }
+
+  async getMatchPredictionAggregate(matchId: number): Promise<{
+    homeWins: number; draws: number; awayWins: number; total: number
+  }> {
+    this.init()
+    // In mock mode: alleen tonen na kickoff (consistent met productie)
+    const match = MATCHES_RAW.find(m => m.id === matchId)
+    if (!match) return { homeWins: 0, draws: 0, awayWins: 0, total: 0 }
+    const kickoffMs = NOW + match.offset * 3600_000
+    const user = this.getUserWithTermsOverride(this.currentUserId)
+    if (Date.now() < kickoffMs && !user?.is_admin) {
+      return { homeWins: 0, draws: 0, awayWins: 0, total: 0 }
+    }
+
+    let h = 0, d = 0, a = 0
+    for (const userId of Object.keys(this.predictions)) {
+      const p = this.predictions[userId].find(pp => pp.match_id === matchId)
+      if (!p) continue
+      if (p.home_score > p.away_score) h++
+      else if (p.home_score < p.away_score) a++
+      else d++
+    }
+    return { homeWins: h, draws: d, awayWins: a, total: h + d + a }
+  }
+
   async adminUnconfirm(matchId: number): Promise<void> {
     await this.requireAdmin()
     const entry = this.adminResults[matchId]
