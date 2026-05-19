@@ -61,6 +61,27 @@ class SupabaseProvider implements DataProvider {
     await this.supabase.auth.signOut()
   }
 
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) {
+      // Geef niet weg of het email bestaat (anti-enumeration)
+      // De UI toont altijd dezelfde success-state, of de email bestaat of niet
+      throw error
+    }
+  }
+
+  async updatePassword(newPassword: string): Promise<void> {
+    const { error } = await this.supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      if (error.message.toLowerCase().includes('password')) {
+        throw new Error('Wachtwoord moet minimaal 6 tekens zijn')
+      }
+      throw error
+    }
+  }
+
   async acceptTerms(version: string): Promise<void> {
     const { data: { user } } = await this.supabase.auth.getUser()
     if (!user) throw new Error('Niet ingelogd')
