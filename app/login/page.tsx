@@ -129,9 +129,19 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-[10px] tracking-wider uppercase text-ink-500 mb-1.5">
-              Wachtwoord {mode === 'signup' && <span className="text-ink-400 normal-case tracking-normal">(min. 6 tekens)</span>}
-            </label>
+            <div className="flex items-baseline justify-between mb-1.5">
+              <label className="block text-[10px] tracking-wider uppercase text-ink-500">
+                Wachtwoord {mode === 'signup' && <span className="text-ink-400 normal-case tracking-normal">(min. 6 tekens)</span>}
+              </label>
+              {mode === 'signin' && (
+                <Link
+                  href="/forgot-password"
+                  className="text-[10px] text-ink-400 hover:text-accent-orange underline underline-offset-2"
+                >
+                  Vergeten?
+                </Link>
+              )}
+            </div>
             <input
               type="password"
               value={password}
