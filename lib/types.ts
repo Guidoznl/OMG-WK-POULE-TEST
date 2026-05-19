@@ -181,6 +181,11 @@ export interface DataProvider {
   signOut(): Promise<void>
   acceptTerms(version: string): Promise<void>
 
+  // Password reset: stuurt mail naar de gebruiker met een reset-link.
+  // De link landt op /reset-password waar updatePassword wordt aangeroepen.
+  sendPasswordResetEmail(email: string): Promise<void>
+  updatePassword(newPassword: string): Promise<void>
+
   getStages(): Promise<Stage[]>
   getMatches(stageId?: number): Promise<Match[]>
   getMatchdaySummaries(): Promise<MatchdaySummary[]>
