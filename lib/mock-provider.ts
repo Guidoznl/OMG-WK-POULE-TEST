@@ -403,6 +403,14 @@ class MockProvider implements DataProvider {
     saveToStorage(STORAGE_KEYS.currentUser, '')
   }
 
+  async sendPasswordResetEmail(_email: string): Promise<void> {
+    // Mock mode: doe niets, simuleer success
+  }
+
+  async updatePassword(_newPassword: string): Promise<void> {
+    // Mock mode: wachtwoord wordt niet opgeslagen
+  }
+
   async acceptTerms(version: string): Promise<void> {
     this.init()
     if (!this.currentUserId) return
