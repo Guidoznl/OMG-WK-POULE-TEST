@@ -379,6 +379,51 @@ class SupabaseProvider implements DataProvider {
     }))
   }
 
+  async getPlayerPredictions(userId: string): Promise<any[]> {
+    const { data, error } = await this.supabase.rpc('get_player_predictions', {
+      p_user_id: userId,
+    })
+    if (error) {
+      console.error('getPlayerPredictions error:', error)
+      return []
+    }
+    return (data || []).map((row: any) => ({
+      match_id: row.match_id,
+      stage_id: row.stage_id,
+      group_label: row.group_label,
+      kickoff_ams: row.kickoff_ams,
+      home_fifa: row.home_fifa,
+      away_fifa: row.away_fifa,
+      home_iso: row.home_iso,
+      away_iso: row.away_iso,
+      pred_home: row.pred_home,
+      pred_away: row.pred_away,
+      actual_home: row.actual_home,
+      actual_away: row.actual_away,
+      result_locked: row.result_locked,
+      points_awarded: row.points_awarded,
+    }))
+  }
+
+  async getPlayerProfile(userId: string): Promise<any | null> {
+    const { data, error } = await this.supabase.rpc('get_player_profile', {
+      p_user_id: userId,
+    })
+    if (error) {
+      console.error('getPlayerProfile error:', error)
+      return null
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row) return null
+    return {
+      user_id: row.user_id,
+      display_name: row.display_name,
+      total_points: Number(row.total_points || 0),
+      exact_predictions: Number(row.exact_predictions || 0),
+      rank: Number(row.rank || 0),
+    }
+  }
+
   async adminUnconfirm(matchId: number): Promise<void> {
     const { error } = await this.supabase.rpc('admin_unconfirm', {
       p_match_id: matchId,
