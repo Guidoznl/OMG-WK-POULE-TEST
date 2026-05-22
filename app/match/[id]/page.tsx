@@ -275,25 +275,32 @@ function PredictionRow({ prediction, match, highlight }: {
     prediction.home_score === match.home_score &&
     prediction.away_score === match.away_score
 
-  // Niet-voorspeld: subtielere weergave
+  // Niet-voorspeld: subtielere weergave (wel klikbaar naar profiel)
   if (!prediction.has_predicted) {
     return (
-      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
-        highlight ? 'bg-ink-700 ring-1 ring-accent-orange/40' : 'bg-ink-800 opacity-60'
-      }`}>
+      <Link
+        href={`/speler/${prediction.user_id}`}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+          highlight ? 'bg-ink-700 ring-1 ring-accent-orange/40 hover:bg-ink-600' : 'bg-ink-800 opacity-60 hover:opacity-100 hover:bg-ink-700'
+        }`}
+      >
         <span className="flex-1 text-ink-200 text-sm truncate">
           {prediction.display_name}
           {highlight && <span className="ml-1.5 text-[10px] text-accent-orange">(jij)</span>}
         </span>
         <span className="text-ink-500 text-xs italic">Nog niet voorspeld</span>
-      </div>
+        <ChevronRightMini />
+      </Link>
     )
   }
 
   return (
-    <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
-      highlight ? 'bg-ink-700 ring-1 ring-accent-orange/40' : 'bg-ink-800'
-    }`}>
+    <Link
+      href={`/speler/${prediction.user_id}`}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+        highlight ? 'bg-ink-700 ring-1 ring-accent-orange/40 hover:bg-ink-600' : 'bg-ink-800 hover:bg-ink-700'
+      }`}
+    >
       <span className="flex-1 text-ink-200 text-sm truncate">
         {prediction.display_name}
         {highlight && <span className="ml-1.5 text-[10px] text-accent-orange">(jij)</span>}
@@ -305,7 +312,16 @@ function PredictionRow({ prediction, match, highlight }: {
       {prediction.points_awarded !== null && prediction.points_awarded > 0 && (
         <span className="font-display font-medium text-accent-orange text-sm w-10 text-right">+{prediction.points_awarded}</span>
       )}
-    </div>
+      <ChevronRightMini />
+    </Link>
+  )
+}
+
+function ChevronRightMini() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 flex-shrink-0">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   )
 }
 
