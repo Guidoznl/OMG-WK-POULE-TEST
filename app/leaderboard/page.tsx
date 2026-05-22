@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { LeaderboardEntry, Profile } from '@/lib/types'
 import { getDataProvider } from '@/lib/data-provider'
 import { TopNav } from '@/components/TopNav'
@@ -41,10 +42,11 @@ export default function LeaderboardPage() {
               const isMe = me?.id === entry.user_id
               const isPodium = entry.rank <= 3
               return (
-                <div
+                <Link
                   key={entry.user_id}
+                  href={`/speler/${entry.user_id}`}
                   className={`flex items-center gap-4 px-4 py-3 rounded-tile transition-colors ${
-                    isMe ? 'bg-accent-orange/10 border border-accent-orange/30' : 'bg-ink-700'
+                    isMe ? 'bg-accent-orange/10 border border-accent-orange/30 hover:bg-accent-orange/20' : 'bg-ink-700 hover:bg-ink-600'
                   }`}
                 >
                   <div className={`w-7 text-center font-display font-medium text-base tabular-nums flex-shrink-0 ${
@@ -72,7 +74,8 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="text-[10px] tracking-wider uppercase text-ink-500">punten</div>
                   </div>
-                </div>
+                  <ChevronRight />
+                </Link>
               )
             })}
             {entries.length === 0 && (
@@ -96,6 +99,14 @@ function TargetIcon({ className = '' }: { className?: string }) {
       <circle cx="12" cy="12" r="10" />
       <circle cx="12" cy="12" r="6" />
       <circle cx="12" cy="12" r="2" />
+    </svg>
+  )
+}
+
+function ChevronRight() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 flex-shrink-0">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   )
 }
