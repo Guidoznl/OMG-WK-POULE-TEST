@@ -56,16 +56,45 @@ export default function PlayerProfilePage() {
     return map
   }, [stages])
 
-  // Groepeer voorspellingen per fase
+  // Groepeer voorspellingen per fase. Binnen de groepsfase (stage_id 1) ook
+  // nog eens per poule (group_label), met behoud van chronologie binnen elke poule.
   const grouped = useMemo(() => {
-    const groups = new Map<number, PlayerPrediction[]>()
+    // Eerst per fase
+    const byStage = new Map<number, PlayerPrediction[]>()
     for (const p of predictions) {
-      if (!groups.has(p.stage_id)) groups.set(p.stage_id, [])
-      groups.get(p.stage_id)!.push(p)
+      if (!byStage.has(p.stage_id)) byStage.set(p.stage_id, [])
+      byStage.get(p.stage_id)!.push(p)
     }
-    return Array.from(groups.entries())
+
+    return Array.from(byStage.entries())
       .sort(([a], [b]) => a - b)
-      .map(([stageId, preds]) => ({ stageId, preds }))
+      .map(([stageId, preds]) => {
+        // Heeft deze fase poule-labels? (groepsfase wel, knockout niet)
+        const hasGroups = preds.some(p => p.group_label)
+
+        if (!hasGroups) {
+          // Geen poules: gewoon één lijst, chronologisch
+          return {
+            stageId,
+            subGroups: [{ label: null as string | null, preds: [...preds].sort(byKickoff) }],
+          }
+        }
+
+        // Wel poules: groepeer per group_label
+        const byGroup = new Map<string, PlayerPrediction[]>()
+        for (const p of preds) {
+          const key = p.group_label || 'Overig'
+          if (!byGroup.has(key)) byGroup.set(key, [])
+          byGroup.get(key)!.push(p)
+        }
+        const subGroups = Array.from(byGroup.entries())
+          .sort(([a], [b]) => a.localeCompare(b)) // Group A, B, C...
+          .map(([label, gPreds]) => ({
+            label,
+            preds: [...gPreds].sort(byKickoff),
+          }))
+        return { stageId, subGroups }
+      })
   }, [predictions])
 
   if (loading) {
@@ -127,21 +156,33 @@ export default function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* Voorspellingen per fase */}
+        {/* Voorspellingen per fase, binnen groepsfase per poule */}
         {grouped.length === 0 ? (
           <p className="text-ink-400 text-sm text-center py-12">
             {isMe ? 'Je hebt nog geen voorspellingen ingediend.' : 'Deze speler heeft nog geen voorspellingen ingediend.'}
           </p>
         ) : (
-          <div className="space-y-5">
-            {grouped.map(({ stageId, preds }) => (
+          <div className="space-y-6">
+            {grouped.map(({ stageId, subGroups }) => (
               <div key={stageId}>
-                <h2 className="font-display text-sm font-medium text-ink-200 mb-2 px-1">
+                <h2 className="font-display text-sm font-medium text-ink-200 mb-3 px-1">
                   {stageName.get(stageId) || `Fase ${stageId}`}
                 </h2>
-                <div className="space-y-1">
-                  {preds.map(p => (
-                    <PlayerPredictionRow key={p.match_id} pred={p} />
+                <div className="space-y-4">
+                  {subGroups.map((sub, idx) => (
+                    <div key={sub.label ?? idx}>
+                      {/* Poule-label (alleen als er poules zijn) */}
+                      {sub.label && (
+                        <h3 className="text-[11px] tracking-wider uppercase text-ink-500 mb-1.5 px-1">
+                          {dutchGroupLabel(sub.label)}
+                        </h3>
+                      )}
+                      <div className="space-y-1">
+                        {sub.preds.map(p => (
+                          <PlayerPredictionRow key={p.match_id} pred={p} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -151,6 +192,11 @@ export default function PlayerProfilePage() {
       </main>
     </>
   )
+}
+
+// "Group A" → "Poule A"
+function dutchGroupLabel(label: string): string {
+  return label.replace(/^Group\s+/i, 'Poule ')
 }
 
 function StatBlock({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
@@ -217,4 +263,9 @@ function BackIcon() {
       <polyline points="15 18 9 12 15 6" />
     </svg>
   )
+}
+
+// Sorteer voorspellingen chronologisch op kickoff-tijd
+function byKickoff(a: PlayerPrediction, b: PlayerPrediction): number {
+  return new Date(a.kickoff_ams).getTime() - new Date(b.kickoff_ams).getTime()
 }
