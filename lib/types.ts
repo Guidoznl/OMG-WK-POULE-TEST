@@ -171,6 +171,33 @@ export type PublicMatchPrediction = {
   has_predicted: boolean
 }
 
+// Eén voorspelling op de speler-profielpagina (met wedstrijd-info)
+export type PlayerPrediction = {
+  match_id: number
+  stage_id: number
+  group_label: string | null
+  kickoff_ams: string
+  home_fifa: string | null
+  away_fifa: string | null
+  home_iso: string | null
+  away_iso: string | null
+  pred_home: number
+  pred_away: number
+  actual_home: number | null
+  actual_away: number | null
+  result_locked: boolean
+  points_awarded: number | null
+}
+
+// Basis profielinfo voor de speler-profielpagina
+export type PlayerProfile = {
+  user_id: string
+  display_name: string
+  total_points: number
+  exact_predictions: number
+  rank: number
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Data provider interface
 // ──────────────────────────────────────────────────────────────────────────
@@ -218,6 +245,10 @@ export interface DataProvider {
     homeWins: number; draws: number; awayWins: number; total: number
   }>
   getMatchPredictionsPublic(matchId: number): Promise<PublicMatchPrediction[]>
+
+  // ── Speler-profiel (read-only, zichtbaar voor iedereen) ──
+  getPlayerPredictions(userId: string): Promise<PlayerPrediction[]>
+  getPlayerProfile(userId: string): Promise<PlayerProfile | null>
 
   devSwitchUser?(userId: string): Promise<void>
   devListUsers?(): Promise<Profile[]>
