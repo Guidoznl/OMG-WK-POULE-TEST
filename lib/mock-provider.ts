@@ -800,6 +800,54 @@ class MockProvider implements DataProvider {
     return out.sort((a, b) => a.display_name.localeCompare(b.display_name))
   }
 
+  async getPlayerPredictions(userId: string): Promise<any[]> {
+    this.init()
+    const fresh = this.freshAllMatches()
+    const userPreds = this.predictions[userId] || []
+    const out: any[] = []
+    for (const pred of userPreds) {
+      const match = fresh.find(m => m.id === pred.match_id)
+      if (!match) continue
+      out.push({
+        match_id: match.id,
+        stage_id: match.stage_id,
+        group_label: match.group_label,
+        kickoff_ams: match.kickoff_ams,
+        home_fifa: match.home_team?.fifa_code ?? null,
+        away_fifa: match.away_team?.fifa_code ?? null,
+        home_iso: match.home_team?.iso_code ?? null,
+        away_iso: match.away_team?.iso_code ?? null,
+        pred_home: pred.home_score,
+        pred_away: pred.away_score,
+        actual_home: match.home_score,
+        actual_away: match.away_score,
+        result_locked: match.result_locked,
+        points_awarded: pred.points_awarded,
+      })
+    }
+    return out.sort((a, b) =>
+      new Date(a.kickoff_ams).getTime() - new Date(b.kickoff_ams).getTime()
+    )
+  }
+
+  async getPlayerProfile(userId: string): Promise<any | null> {
+    this.init()
+    const board = await this.getLeaderboard()
+    const entry = board.find(e => e.user_id === userId)
+    if (!entry) {
+      const user = TEST_USERS.find(u => u.id === userId)
+      if (!user) return null
+      return { user_id: userId, display_name: user.display_name, total_points: 0, exact_predictions: 0, rank: 0 }
+    }
+    return {
+      user_id: entry.user_id,
+      display_name: entry.display_name,
+      total_points: entry.total_points,
+      exact_predictions: entry.exact_predictions,
+      rank: entry.rank,
+    }
+  }
+
   async adminUnconfirm(matchId: number): Promise<void> {
     await this.requireAdmin()
     const entry = this.adminResults[matchId]
