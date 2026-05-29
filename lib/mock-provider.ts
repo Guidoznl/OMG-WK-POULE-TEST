@@ -847,6 +847,10 @@ class MockProvider implements DataProvider {
       rank: entry.rank,
     }
   }
+  async getPlayerBonusAnswers(_userId: string): Promise<any[]> {
+    // Mock stub — bonus-tonen werkt alleen in productie
+    return []
+  }
 
   async adminUnconfirm(matchId: number): Promise<void> {
     await this.requireAdmin()
