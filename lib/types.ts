@@ -197,6 +197,19 @@ export type PlayerProfile = {
   exact_predictions: number
   rank: number
 }
+// Eén bonusvraag-antwoord op de speler-profielpagina
+export type PlayerBonusAnswer = {
+  question_id: number
+  question_text: string
+  question_type: 'text' | 'number' | 'team'
+  display_order: number
+  points_exact: number
+  points_close: number
+  answer_raw: string | null
+  answer_normalized: string | null
+  correct_answer: string | null
+  points_awarded: number | null
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Data provider interface
@@ -249,6 +262,7 @@ export interface DataProvider {
   // ── Speler-profiel (read-only, zichtbaar voor iedereen) ──
   getPlayerPredictions(userId: string): Promise<PlayerPrediction[]>
   getPlayerProfile(userId: string): Promise<PlayerProfile | null>
+  getPlayerBonusAnswers(userId: string): Promise<PlayerBonusAnswer[]>
 
   devSwitchUser?(userId: string): Promise<void>
   devListUsers?(): Promise<Profile[]>
