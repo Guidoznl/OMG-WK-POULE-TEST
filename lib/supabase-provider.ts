@@ -423,6 +423,27 @@ class SupabaseProvider implements DataProvider {
       rank: Number(row.rank || 0),
     }
   }
+  async getPlayerBonusAnswers(userId: string): Promise<any[]> {
+    const { data, error } = await this.supabase.rpc('get_player_bonus_answers', {
+      p_user_id: userId,
+    })
+    if (error) {
+      console.error('getPlayerBonusAnswers error:', error)
+      return []
+    }
+    return (data || []).map((row: any) => ({
+      question_id: row.question_id,
+      question_text: row.question_text,
+      question_type: row.question_type,
+      display_order: row.display_order,
+      points_exact: row.points_exact,
+      points_close: row.points_close,
+      answer_raw: row.answer_raw,
+      answer_normalized: row.answer_normalized,
+      correct_answer: row.correct_answer,
+      points_awarded: row.points_awarded,
+    }))
+  }
 
   async adminUnconfirm(matchId: number): Promise<void> {
     const { error } = await this.supabase.rpc('admin_unconfirm', {
