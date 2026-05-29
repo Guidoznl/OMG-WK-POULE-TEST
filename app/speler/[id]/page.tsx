@@ -3,10 +3,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { PlayerPrediction, PlayerProfile, Stage } from '@/lib/types'
+import { PlayerPrediction, PlayerProfile, PlayerBonusAnswer, Stage } from '@/lib/types'
 import { getDataProvider } from '@/lib/data-provider'
 import { dutchStageName } from '@/lib/labels'
-import { formatDateLocal } from '@/lib/date-utils'
 import { TopNav } from '@/components/TopNav'
 import { FlagCircle } from '@/components/FlagCircle'
 
@@ -17,6 +16,7 @@ export default function PlayerProfilePage() {
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null)
   const [predictions, setPredictions] = useState<PlayerPrediction[]>([])
+  const [bonusAnswers, setBonusAnswers] = useState<PlayerBonusAnswer[]>([])
   const [stages, setStages] = useState<Stage[]>([])
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,9 +30,10 @@ export default function PlayerProfilePage() {
       setMyId(user.id)
 
       try {
-        const [prof, preds, stageList] = await Promise.all([
+        const [prof, preds, bonus, stageList] = await Promise.all([
           provider.getPlayerProfile(userId),
           provider.getPlayerPredictions(userId),
+          provider.getPlayerBonusAnswers(userId),
           provider.getStages(),
         ])
         if (!prof) {
@@ -40,6 +41,7 @@ export default function PlayerProfilePage() {
         } else {
           setProfile(prof)
           setPredictions(preds)
+          setBonusAnswers(bonus)
           setStages(stageList)
         }
       } catch (err: any) {
@@ -56,31 +58,20 @@ export default function PlayerProfilePage() {
     return map
   }, [stages])
 
-  // Groepeer voorspellingen per fase. Binnen de groepsfase (stage_id 1) ook
-  // nog eens per poule (group_label), met behoud van chronologie binnen elke poule.
+  // Groepeer voorspellingen per fase, en binnen groepsfase per poule
   const grouped = useMemo(() => {
-    // Eerst per fase
     const byStage = new Map<number, PlayerPrediction[]>()
     for (const p of predictions) {
       if (!byStage.has(p.stage_id)) byStage.set(p.stage_id, [])
       byStage.get(p.stage_id)!.push(p)
     }
-
     return Array.from(byStage.entries())
       .sort(([a], [b]) => a - b)
       .map(([stageId, preds]) => {
-        // Heeft deze fase poule-labels? (groepsfase wel, knockout niet)
         const hasGroups = preds.some(p => p.group_label)
-
         if (!hasGroups) {
-          // Geen poules: gewoon één lijst, chronologisch
-          return {
-            stageId,
-            subGroups: [{ label: null as string | null, preds: [...preds].sort(byKickoff) }],
-          }
+          return { stageId, subGroups: [{ label: null as string | null, preds: [...preds].sort(byKickoff) }] }
         }
-
-        // Wel poules: groepeer per group_label
         const byGroup = new Map<string, PlayerPrediction[]>()
         for (const p of preds) {
           const key = p.group_label || 'Overig'
@@ -88,11 +79,8 @@ export default function PlayerProfilePage() {
           byGroup.get(key)!.push(p)
         }
         const subGroups = Array.from(byGroup.entries())
-          .sort(([a], [b]) => a.localeCompare(b)) // Group A, B, C...
-          .map(([label, gPreds]) => ({
-            label,
-            preds: [...gPreds].sort(byKickoff),
-          }))
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([label, gPreds]) => ({ label, preds: [...gPreds].sort(byKickoff) }))
         return { stageId, subGroups }
       })
   }, [predictions])
@@ -121,6 +109,8 @@ export default function PlayerProfilePage() {
     p.pred_home === p.actual_home && p.pred_away === p.actual_away
   ).length
 
+  const hasAnyBonusAnswer = bonusAnswers.some(b => b.answer_raw !== null)
+
   return (
     <>
       <TopNav />
@@ -148,7 +138,6 @@ export default function PlayerProfilePage() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-ink-600">
             <StatBlock value={profile.total_points} label="Punten" accent />
             <StatBlock value={exactCount} label="Exact" />
@@ -156,7 +145,7 @@ export default function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* Voorspellingen per fase, binnen groepsfase per poule */}
+        {/* Voorspellingen per fase */}
         {grouped.length === 0 ? (
           <p className="text-ink-400 text-sm text-center py-12">
             {isMe ? 'Je hebt nog geen voorspellingen ingediend.' : 'Deze speler heeft nog geen voorspellingen ingediend.'}
@@ -171,7 +160,6 @@ export default function PlayerProfilePage() {
                 <div className="space-y-4">
                   {subGroups.map((sub, idx) => (
                     <div key={sub.label ?? idx}>
-                      {/* Poule-label (alleen als er poules zijn) */}
                       {sub.label && (
                         <h3 className="text-[11px] tracking-wider uppercase text-ink-500 mb-1.5 px-1">
                           {dutchGroupLabel(sub.label)}
@@ -189,14 +177,31 @@ export default function PlayerProfilePage() {
             ))}
           </div>
         )}
+
+        {/* BONUSVRAGEN sectie */}
+        {bonusAnswers.length > 0 && (
+          <div className="mt-8">
+            <h2 className="font-display text-sm font-medium text-ink-200 mb-3 px-1">
+              Bonusvragen
+            </h2>
+            {!hasAnyBonusAnswer ? (
+              <p className="text-ink-400 text-xs italic px-1">
+                {isMe
+                  ? 'Je hebt nog geen bonusvragen beantwoord.'
+                  : 'Deze speler heeft nog geen bonusvragen beantwoord.'}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {bonusAnswers.map(b => (
+                  <BonusAnswerRow key={b.question_id} answer={b} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </>
   )
-}
-
-// "Group A" → "Poule A"
-function dutchGroupLabel(label: string): string {
-  return label.replace(/^Group\s+/i, 'Poule ')
 }
 
 function StatBlock({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
@@ -220,7 +225,6 @@ function PlayerPredictionRow({ pred }: { pred: PlayerPrediction }) {
       href={`/match/${pred.match_id}`}
       className="flex items-center gap-3 px-3 py-2 bg-ink-800 hover:bg-ink-700 rounded-lg transition-colors"
     >
-      {/* Teams */}
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
         <FlagCircle isoCode={pred.home_iso} size="sm" />
         <span className="text-ink-50 text-xs font-medium">{pred.home_fifa || 'TBD'}</span>
@@ -228,15 +232,11 @@ function PlayerPredictionRow({ pred }: { pred: PlayerPrediction }) {
         <span className="text-ink-50 text-xs font-medium">{pred.away_fifa || 'TBD'}</span>
         <FlagCircle isoCode={pred.away_iso} size="sm" />
       </div>
-
-      {/* Voorspelling */}
       <div className="text-center">
         <span className="font-mono text-ink-200 text-sm tabular-nums">
           {pred.pred_home}–{pred.pred_away}
         </span>
       </div>
-
-      {/* Werkelijke uitslag (indien bekend) */}
       {hasResult && (
         <div className="text-center min-w-[40px]">
           <span className="text-ink-500 text-[10px] tabular-nums">
@@ -244,8 +244,6 @@ function PlayerPredictionRow({ pred }: { pred: PlayerPrediction }) {
           </span>
         </div>
       )}
-
-      {/* Badge + punten */}
       {isExact && <span className="px-1.5 py-0.5 rounded bg-accent-mint/20 text-accent-mint text-[10px] font-medium">EXACT</span>}
       {pred.points_awarded !== null && pred.points_awarded > 0 && (
         <span className="font-display font-medium text-accent-orange text-sm w-9 text-right">+{pred.points_awarded}</span>
@@ -257,6 +255,59 @@ function PlayerPredictionRow({ pred }: { pred: PlayerPrediction }) {
   )
 }
 
+function BonusAnswerRow({ answer }: { answer: PlayerBonusAnswer }) {
+  const hasAnswered = answer.answer_raw !== null
+  const shownAnswer = answer.answer_normalized || answer.answer_raw
+  const hasCorrect = !!answer.correct_answer
+  const isScored = answer.points_awarded !== null
+  const isCorrect = isScored && answer.points_awarded === answer.points_exact
+
+  return (
+    <div className="bg-ink-800 rounded-lg px-3 py-2.5">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-ink-50 text-xs font-medium leading-snug">
+            {answer.question_text}
+          </div>
+          <div className="flex items-baseline gap-1.5 mt-1.5">
+            {hasAnswered ? (
+              <span className="text-ink-200 text-sm font-mono truncate">
+                {shownAnswer}
+              </span>
+            ) : (
+              <span className="text-ink-500 text-xs italic">Niet beantwoord</span>
+            )}
+            {hasCorrect && hasAnswered && (
+              <span className="text-ink-500 text-[10px]">
+                · juist: <span className="text-ink-400">{answer.correct_answer}</span>
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex-shrink-0 flex items-center gap-1.5">
+          {isCorrect && (
+            <span className="px-1.5 py-0.5 rounded bg-accent-mint/20 text-accent-mint text-[10px] font-medium">
+              EXACT
+            </span>
+          )}
+          {isScored && answer.points_awarded! > 0 && !isCorrect && (
+            <span className="px-1.5 py-0.5 rounded bg-accent-amber/20 text-accent-amber text-[10px] font-medium">
+              DICHTBIJ
+            </span>
+          )}
+          {isScored && (
+            <span className={`font-display font-medium text-sm tabular-nums min-w-[28px] text-right ${
+              answer.points_awarded! > 0 ? 'text-accent-orange' : 'text-ink-600'
+            }`}>
+              +{answer.points_awarded}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function BackIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -265,7 +316,10 @@ function BackIcon() {
   )
 }
 
-// Sorteer voorspellingen chronologisch op kickoff-tijd
 function byKickoff(a: PlayerPrediction, b: PlayerPrediction): number {
   return new Date(a.kickoff_ams).getTime() - new Date(b.kickoff_ams).getTime()
+}
+
+function dutchGroupLabel(label: string): string {
+  return label.replace(/^Group\s+/i, 'Poule ')
 }
