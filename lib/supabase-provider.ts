@@ -101,10 +101,7 @@ class SupabaseProvider implements DataProvider {
     return data || []
   }
 
-  async getMatches(stageId?: number): Promise<Match[]> {
-    // Twee aparte queries: matches+teams in één call, lock status in een tweede.
-    // We berekenen status client-side op basis van kickoff_ams om join issues
-    // met views te vermijden.
+   async getMatches(stageId?: number): Promise<Match[]> {
     let query = this.supabase
       .from('matches')
       .select(`
@@ -119,30 +116,38 @@ class SupabaseProvider implements DataProvider {
       console.error('getMatches error:', error)
       return []
     }
-
-    const now = Date.now()
+ 
+    // Tweede query: lock-status uit de view (gebruikt stages.deadline_at).
+    let lockQuery = this.supabase.from('match_lock_status').select('match_id, lock_at, status, is_locked, has_started')
+    const { data: lockData, error: lockErr } = await lockQuery
+    if (lockErr) {
+      console.error('match_lock_status error:', lockErr)
+    }
+    const lockMap = new Map<number, any>()
+    for (const row of (lockData || []) as any[]) {
+      lockMap.set(row.match_id, row)
+    }
+ 
     return (data || []).map((r: any) => {
-      const kickoff = new Date(r.kickoff_ams).getTime()
-      const lockAt = kickoff - 2 * 3600_000
-      const hasResult = r.home_score !== null && r.away_score !== null
-
-      let status: 'open' | 'locked' | 'in_progress' | 'finished'
-      if (hasResult && r.result_locked) status = 'finished'
-      else if (now >= kickoff) status = 'in_progress'
-      else if (now >= lockAt) status = 'locked'
-      else status = 'open'
-
+      const lock = lockMap.get(r.id)
+      // Fallback (alleen als view onbereikbaar): client-side 2u-voor-kickoff
+      const fallbackLockMs = new Date(r.kickoff_ams).getTime() - 2 * 3600_000
+      const lockAtIso = lock?.lock_at ?? new Date(fallbackLockMs).toISOString()
+      const status = lock?.status ?? (
+        r.home_score !== null && r.away_score !== null && r.result_locked ? 'finished'
+        : Date.now() >= new Date(r.kickoff_ams).getTime() ? 'in_progress'
+        : Date.now() >= fallbackLockMs ? 'locked'
+        : 'open'
+      )
       return {
         ...r,
-        lock_at: new Date(lockAt).toISOString(),
+        lock_at: lockAtIso,
         status,
-        // Voor wedstrijden zonder bevestigd resultaat: scores verbergen
         home_score: r.result_locked ? r.home_score : null,
         away_score: r.result_locked ? r.away_score : null,
       }
     })
   }
-
   async getMatchdaySummaries(): Promise<MatchdaySummary[]> {
     const { data, error } = await this.supabase.from('matchday_summary').select('*')
     if (error) {
