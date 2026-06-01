@@ -24,11 +24,20 @@ export default function AdminBonusPage() {
     ])
     setQuestions(qs)
     setAnswers(ans)
-    // Load correct answers from localStorage
+    // Vul correctAnswers met wat al in DB staat (uit getBonusQuestions);
+    // fallback: localStorage cache uit eerdere sessies.
+    const fromDB: Record<number, string> = {}
+    for (const q of qs) {
+      const ca = (q as any).correct_answer
+      if (ca) fromDB[q.id] = ca
+    }
     try {
       const raw = window.localStorage.getItem('wkpool_admin_bonus_correct')
-      if (raw) setCorrectAnswers(JSON.parse(raw))
-    } catch {}
+      const cached = raw ? JSON.parse(raw) : {}
+      setCorrectAnswers({ ...cached, ...fromDB })  // DB wint
+    } catch {
+      setCorrectAnswers(fromDB)
+    }
   }
 
   useEffect(() => {
@@ -89,7 +98,7 @@ export default function AdminBonusPage() {
 
         <h1 className="font-display text-2xl font-medium text-ink-50 mb-1">Bonusvragen</h1>
         <p className="text-ink-400 text-sm mb-6">
-          Per vraag: stel het juiste antwoord in, normaliseer spelfouten, en bereken de punten.
+          Per vraag: stel het juiste antwoord in, normaliseer spelfouten waar van toepassing, en bereken de punten.
         </p>
 
         {message && (
@@ -129,17 +138,47 @@ function BonusQuestionAdminCard({ question, correctAnswer, answers, onSetCorrect
   onScore: () => void
 }) {
   const [localCorrect, setLocalCorrect] = useState(correctAnswer)
+  const scoringType = (question as any).scoring_type as string | undefined
+  const isScale = scoringType === 'scale'
+  const isMulti = scoringType === 'multi_correct'
 
-  // Collect unique normalized values from existing answers to use as suggestions
+  // Sync localCorrect when prop changes (na reload)
+  useEffect(() => { setLocalCorrect(correctAnswer) }, [correctAnswer])
+
   const suggestions = Array.from(new Set(
     answers
       .map(a => a.answer_normalized || a.answer_raw)
       .filter(v => v && v.trim())
   )).sort()
 
+  // Label per scoring-type voor de admin
+  const typeLabel = isScale
+    ? 'SCHAALPUNTEN'
+    : isMulti
+      ? 'MEERDERE JUIST'
+      : 'EXACT GOED'
+
   return (
     <div className="tile p-5">
-      <h3 className="font-display text-base text-ink-50 font-medium mb-3">{question.question_text}</h3>
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <h3 className="font-display text-base text-ink-50 font-medium">{question.question_text}</h3>
+        <span className="text-[10px] tracking-wider uppercase text-ink-500 whitespace-nowrap">
+          {typeLabel}
+        </span>
+      </div>
+
+      {/* Type-specifieke hint */}
+      {isScale && (
+        <p className="text-[11px] text-ink-400 mb-3 -mt-1">
+          Vul het officiële numerieke antwoord in. Punten worden automatisch
+          berekend op basis van afwijking: 0 = {question.points_exact} pt · 1–45 = {question.points_close} pt · 46–90 = 10 pt · ≥91 = 0 pt.
+        </p>
+      )}
+      {isMulti && (
+        <p className="text-[11px] text-ink-400 mb-3 -mt-1">
+          Bij meerdere juiste antwoorden: scheid met komma's (bv. <i>Mbappé, Kane</i>).
+        </p>
+      )}
 
       {/* Correct answer input */}
       <div className="mb-4">
@@ -162,7 +201,7 @@ function BonusQuestionAdminCard({ question, correctAnswer, answers, onSetCorrect
             value={localCorrect}
             onChange={e => setLocalCorrect(e.target.value)}
             onBlur={() => onSetCorrect(localCorrect)}
-            placeholder="bv. 17"
+            placeholder={isScale ? 'bv. 105' : 'bv. 17'}
             className="w-full px-3 py-2 text-sm tabular-nums"
           />
         ) : (
@@ -171,7 +210,7 @@ function BonusQuestionAdminCard({ question, correctAnswer, answers, onSetCorrect
             value={localCorrect}
             onChange={e => setLocalCorrect(e.target.value)}
             onBlur={() => onSetCorrect(localCorrect)}
-            placeholder="bv. Kylian Mbappé"
+            placeholder={isMulti ? 'bv. Mbappé, Kane' : 'bv. Kylian Mbappé'}
             className="w-full px-3 py-2 text-sm"
             list={`suggest-q${question.id}`}
           />
@@ -204,9 +243,13 @@ function BonusQuestionAdminCard({ question, correctAnswer, answers, onSetCorrect
             {answers.map(a => {
               const normalizedValue = a.answer_normalized || a.answer_raw
               const isCorrect = correctAnswer && (
-                question.question_type === 'number'
+                isScale
                   ? parseInt(normalizedValue) === parseInt(correctAnswer)
-                  : normalizedValue.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
+                  : isMulti
+                    ? correctAnswer.split(',').map(s => s.trim().toLowerCase()).includes(normalizedValue.trim().toLowerCase())
+                    : question.question_type === 'number'
+                      ? parseInt(normalizedValue) === parseInt(correctAnswer)
+                      : normalizedValue.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
               )
               return (
                 <div key={a.user_id} className="flex items-center gap-2 p-2 bg-ink-800 rounded-lg">
@@ -217,7 +260,8 @@ function BonusQuestionAdminCard({ question, correctAnswer, answers, onSetCorrect
                       <span className="text-ink-500"> &rarr; {a.answer_normalized}</span>
                     )}
                   </span>
-                  {question.question_type === 'text' && (
+                  {/* Normaliseren alleen voor text-vragen */}
+                  {question.question_type === 'text' && !isMulti && (
                     <button
                       onClick={() => {
                         const v = prompt('Normaliseer naar:', a.answer_normalized || a.answer_raw)
