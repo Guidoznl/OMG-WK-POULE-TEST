@@ -50,14 +50,41 @@ export default function ExtrasPage() {
     return <><TopNav /><main className="max-w-3xl mx-auto p-4"><p className="text-ink-400 text-sm text-center mt-12">Laden…</p></main></>
   }
 
+  // Bonus is gesloten als er minstens één actieve vraag is waarvan de
+  // deadline al voorbij is. We gaan uit van één gezamenlijke deadline.
+  const now = Date.now()
+  const earliestDeadline = questions
+    .map(q => (q as any).deadline_at)
+    .filter(Boolean)
+    .map(d => new Date(d).getTime())
+    .sort()[0]
+  const isLocked = earliestDeadline ? now >= earliestDeadline : false
+  const deadlineDate = earliestDeadline ? new Date(earliestDeadline) : null
+
   return (
     <>
       <TopNav />
       <main className="max-w-3xl mx-auto p-4 pb-12">
         <h1 className="font-display text-2xl font-medium text-ink-50 mb-1">Extra punten</h1>
-        <p className="text-ink-400 text-sm mb-6">
-          Drie bonusvragen die je éénmalig invult. Punten worden uitgekeerd na afloop van het toernooi.
+        <p className="text-ink-400 text-sm mb-4">
+          Vijf bonusvragen die je éénmalig invult vóór de start van het toernooi.
+          Punten worden uitgekeerd na afloop.
         </p>
+
+        {/* Deadline banner */}
+        {deadlineDate && (
+          <div className={`mb-4 p-3 rounded-tile text-xs ${
+            isLocked
+              ? 'bg-ink-800 border border-ink-600 text-ink-400'
+              : 'bg-accent-orange/10 border border-accent-orange/30 text-accent-orange'
+          }`}>
+            {isLocked ? (
+              <span><b>Gesloten.</b> Antwoorden zijn vergrendeld sinds {formatDateTime(deadlineDate)}.</span>
+            ) : (
+              <span><b>Sluiting:</b> {formatDateTime(deadlineDate)} (Amsterdam-tijd).</span>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           {questions.map(q => {
@@ -68,31 +95,47 @@ export default function ExtrasPage() {
                 question={q}
                 currentAnswer={current?.answer_raw || ''}
                 onSave={(answer) => handleSave(q.id, answer)}
+                locked={isLocked}
               />
             )
           })}
         </div>
 
         <p className="text-[11px] text-ink-500 text-center mt-8">
-          Sluitingsmoment: bij de aftrap van de eerste wedstrijd van het toernooi.
+          Alle bonusvragen sluiten bij de aftrap van de eerste wedstrijd van het toernooi.
         </p>
       </main>
     </>
   )
 }
 
+// Formatteer in Amsterdam-tijd
+function formatDateTime(d: Date): string {
+  return d.toLocaleString('nl-NL', {
+    weekday: 'long', day: 'numeric', month: 'long',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Europe/Amsterdam',
+  })
+}
+
 // ───────────────────────────────────────────────────────────────
 
-function BonusQuestionCard({ question, currentAnswer, onSave }: {
+function BonusQuestionCard({ question, currentAnswer, onSave, locked }: {
   question: BonusQuestion
   currentAnswer: string
   onSave: (answer: string) => Promise<void>
+  locked: boolean
 }) {
   const [value, setValue] = useState(currentAnswer)
   const [save, setSave] = useState<SaveState>('idle')
   const [savedFlash, setSavedFlash] = useState(false)
 
+  // Bepaal of dit een schaalpunten-vraag is (Marten de Roon)
+  const scoringType = (question as any).scoring_type as string | undefined
+  const isScale = scoringType === 'scale'
+
   useEffect(() => {
+    if (locked) return
     if (value === currentAnswer) return
     if (!value.trim()) return
 
@@ -103,28 +146,33 @@ function BonusQuestionCard({ question, currentAnswer, onSave }: {
         setSave('saved')
         setSavedFlash(true)
         setTimeout(() => { setSave('idle'); setSavedFlash(false) }, 4000)
-      } catch {
+      } catch (err: any) {
         setSave('error')
       }
     }, 600)
     return () => clearTimeout(timer)
-  }, [value])
+  }, [value, locked])
 
   const wrapClass = `tile p-5 transition-all duration-300 ${
     savedFlash ? 'ring-2 ring-accent-mint ring-offset-2 ring-offset-ink-950' : ''
-  }`
+  } ${locked ? 'opacity-70' : ''}`
+
+  // Wat tonen we naast de vraagtekst voor punten?
+  const pointsLabel = isScale
+    ? `${question.points_exact} / ${question.points_close} / 10 pt`
+    : `${question.points_exact} pt`
 
   return (
     <div className={wrapClass}>
       <div className="flex items-start justify-between mb-3 gap-3">
         <h3 className="font-display text-base text-ink-50 font-medium">{question.question_text}</h3>
         <span className="text-xs text-accent-orange font-display font-medium whitespace-nowrap">
-          {question.points_exact} pt{question.points_close ? ` (of ${question.points_close})` : ''}
+          {pointsLabel}
         </span>
       </div>
 
       {question.question_type === 'team' && (
-        <TeamPicker value={value} onChange={setValue} />
+        <TeamPicker value={value} onChange={setValue} disabled={locked} />
       )}
 
       {question.question_type === 'text' && (
@@ -133,6 +181,7 @@ function BonusQuestionCard({ question, currentAnswer, onSave }: {
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder="Naam van speler"
+          disabled={locked}
           className="w-full px-3 py-2.5 text-sm"
           aria-label={question.question_text}
         />
@@ -146,31 +195,34 @@ function BonusQuestionCard({ question, currentAnswer, onSave }: {
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder="Aantal"
+          disabled={locked}
           className="w-full px-3 py-2.5 text-sm tabular-nums"
           aria-label={question.question_text}
         />
       )}
 
+      {/* Save-state regel */}
       <div className="h-4 mt-2.5 text-right">
-        {save === 'saving' && <span className="text-ink-400 text-[11px]">Opslaan…</span>}
-        {save === 'saved' && (
+        {!locked && save === 'saving' && <span className="text-ink-400 text-[11px]">Opslaan…</span>}
+        {!locked && save === 'saved' && (
           <span className="text-accent-mint text-[11px] font-medium inline-flex items-center gap-1">
             <CheckMini /> Opgeslagen
           </span>
         )}
-        {save === 'error' && <span className="text-accent-coral text-[11px]">Fout — probeer opnieuw</span>}
+        {!locked && save === 'error' && <span className="text-accent-coral text-[11px]">Fout — probeer opnieuw</span>}
       </div>
 
-      {question.id === 3 && (
+      {/* Hint per scoring-type */}
+      {isScale && (
         <p className="text-[11px] text-ink-500 mt-1">
-          Exact = {question.points_exact} pt. Binnen {question.close_threshold} = {question.points_close} pt.
+          Exact = {question.points_exact} pt · binnen 45 min = {question.points_close} pt · binnen 90 min = 10 pt · daarna 0 pt.
         </p>
       )}
     </div>
   )
 }
 
-function TeamPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function TeamPicker({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled: boolean }) {
   const teams = getAllTeams()
   const selectedTeam = teams.find(t => t.name === value)
 
@@ -179,7 +231,8 @@ function TeamPicker({ value, onChange }: { value: string; onChange: (v: string) 
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 text-sm appearance-none bg-ink-950 border border-ink-600 rounded-lg text-ink-50 cursor-pointer pr-10"
+        disabled={disabled}
+        className="w-full px-3 py-2.5 text-sm appearance-none bg-ink-950 border border-ink-600 rounded-lg text-ink-50 cursor-pointer pr-10 disabled:opacity-60"
       >
         <option value="">Kies een land…</option>
         {teams.map(t => (
