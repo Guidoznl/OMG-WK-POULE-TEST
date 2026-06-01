@@ -57,6 +57,24 @@ export default function AdminHomePage() {
     )
   }, [overview, activeStage, filter])
 
+  // Groepeer de zichtbare wedstrijden per poule (binnen groepsfase) of als
+  // één blok (knockout-fases). Behoudt chronologische volgorde binnen elke groep.
+  const grouped = useMemo(() => {
+    const hasGroups = visible.some(o => o.match.group_label)
+    if (!hasGroups) {
+      return [{ label: null as string | null, items: visible }]
+    }
+    const byGroup = new Map<string, AdminMatchOverview[]>()
+    for (const o of visible) {
+      const key = o.match.group_label || 'Overig'
+      if (!byGroup.has(key)) byGroup.set(key, [])
+      byGroup.get(key)!.push(o)
+    }
+    return Array.from(byGroup.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, items]) => ({ label, items }))
+  }, [visible])
+
   const stats = useMemo(() => {
     const s = overview.filter(o => o.match.stage_id === activeStage)
     return {
@@ -133,20 +151,31 @@ export default function AdminHomePage() {
           </button>
         )}
 
-        {/* Match list */}
-        <div className="space-y-2">
-          {visible.length === 0 ? (
-            <p className="text-ink-400 text-sm text-center py-12">Geen wedstrijden in deze selectie.</p>
-          ) : (
-            visible.map(o => (
-              <AdminMatchRow
-                key={o.match.id}
-                overview={o}
-                onChange={reload}
-              />
-            ))
-          )}
-        </div>
+        {/* Match list — gegroepeerd per poule (groepsfase) of in één blok (knockout) */}
+        {visible.length === 0 ? (
+          <p className="text-ink-400 text-sm text-center py-12">Geen wedstrijden in deze selectie.</p>
+        ) : (
+          <div className="space-y-5">
+            {grouped.map((group, idx) => (
+              <div key={group.label ?? idx}>
+                {group.label && (
+                  <h3 className="text-[11px] tracking-wider uppercase text-ink-500 mb-2 px-1">
+                    {group.label.replace(/^Group\s+/i, 'Poule ')}
+                  </h3>
+                )}
+                <div className="space-y-2">
+                  {group.items.map(o => (
+                    <AdminMatchRow
+                      key={o.match.id}
+                      overview={o}
+                      onChange={reload}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </>
   )
