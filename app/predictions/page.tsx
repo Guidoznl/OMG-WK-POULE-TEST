@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Match, Prediction, Stage, MatchdaySummary, CURRENT_TERMS_VERSION } from '@/lib/types'
 import { getDataProvider } from '@/lib/data-provider'
-import { formatDeadline, formatCountdownShort } from '@/lib/date-utils'
 import { TopNav } from '@/components/TopNav'
 import { MatchTile } from '@/components/MatchTile'
 import { GroupStandings } from '@/components/GroupStandings'
@@ -25,7 +24,6 @@ export default function PredictionsPage() {
       const provider = getDataProvider()
       const user = await provider.getCurrentUser()
       if (!user) { router.push('/login'); return }
-      // Force terms acceptance before anything else
       if (!user.accepted_terms_at || user.accepted_terms_version !== CURRENT_TERMS_VERSION) {
         router.push('/terms-accept')
         return
@@ -45,7 +43,6 @@ export default function PredictionsPage() {
     }
     load()
 
-    // Re-load every 60 seconds so lock-states update live
     const interval = setInterval(load, 60_000)
     return () => clearInterval(interval)
   }, [router])
@@ -58,14 +55,12 @@ export default function PredictionsPage() {
     if (activeStageId !== 1) setActiveGroup(null)
   }, [activeStageId, matches])
 
-  // Get matches relevant to the active selection, grouped by matchday
   const matchdayGroups = useMemo(() => {
     let visible = matches.filter(m => m.stage_id === activeStageId)
     if (activeStageId === 1 && activeGroup) {
       visible = visible.filter(m => m.group_label === activeGroup)
     }
     visible.sort((a, b) => new Date(a.kickoff_ams).getTime() - new Date(b.kickoff_ams).getTime())
-    // Group by matchday
     const map: Record<number, Match[]> = {}
     for (const m of visible) {
       if (!map[m.matchday]) map[m.matchday] = []
@@ -174,7 +169,9 @@ export default function PredictionsPage() {
             </p>
           ) : (
             matchdayGroups.map(mg => {
-              const summary = summaries.find(s => s.stage_id === activeStageId && s.matchday === mg.matchday)
+              // De deadline van een speelronde = lock_at van de eerste open
+              // wedstrijd. Door de nieuwe view is dat voor groepsfase
+              // automatisch dezelfde globale deadline voor alle wedstrijden.
               const nextLockAt = mg.matches
                 .filter(m => m.status === 'open')
                 .sort((a, b) => new Date(a.lock_at).getTime() - new Date(b.lock_at).getTime())[0]
@@ -209,7 +206,7 @@ export default function PredictionsPage() {
           <a href="/rules" className="text-ink-400 hover:text-ink-50 underline underline-offset-2">
             Bekijk volledige spelregels
           </a>
-          <p className="mt-2">Wedstrijden sluiten 2 uur vóór de aftrap. Inzendingen kunnen tot dan worden aangepast.</p>
+          <p className="mt-2">Voorspellingen sluiten bij de aftrap van de eerste wedstrijd van een speelronde.</p>
         </div>
       </main>
     </>
@@ -229,16 +226,31 @@ function MatchdayHeader({ stageId, matchday, nextLockAt, allLocked }: {
       <h3 className="text-ink-200 text-sm font-display font-medium">{label}</h3>
       {nextLockAt ? (
         <div className="text-right">
-          <div className="text-[10px] text-ink-500 tracking-wider uppercase">Eerstvolgende sluiting</div>
+          <div className="text-[10px] text-ink-500 tracking-wider uppercase">Deadline</div>
           <div className="text-xs text-accent-amber tabular-nums">
-            {formatDeadline(nextLockAt)} · {formatCountdownShort(nextLockAt)}
+            {formatDeadlineAms(nextLockAt)}
           </div>
         </div>
       ) : (
-        <span className="text-[10px] text-ink-500 tracking-wider uppercase">Volledig vergrendeld</span>
+        <span className="text-[10px] text-ink-500 tracking-wider uppercase">Vergrendeld</span>
       )}
     </div>
   )
+}
+
+// Formatteer als "Datum: 11-06  Tijd: 21:00 (AMS)"
+function formatDeadlineAms(iso: string): string {
+  const d = new Date(iso)
+  const fmt = new Intl.DateTimeFormat('nl-NL', {
+    timeZone: 'Europe/Amsterdam',
+    day: '2-digit', month: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  })
+  const parts = fmt.formatToParts(d)
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? ''
+  const date = `${get('day')}-${get('month')}`
+  const time = `${get('hour')}:${get('minute')}`
+  return `Datum: ${date}  Tijd: ${time} (AMS)`
 }
 
 function uniqueGroups(matches: Match[]): string[] {
