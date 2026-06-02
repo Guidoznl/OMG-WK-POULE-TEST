@@ -233,6 +233,7 @@ export interface DataProvider {
 
   getMyPredictions(): Promise<Prediction[]>
   savePrediction(matchId: number, homeScore: number, awayScore: number): Promise<void>
+  clearPrediction(matchId: number): Promise<void>
 
   getBonusQuestions(): Promise<BonusQuestion[]>
   getMyBonusPredictions(): Promise<BonusPrediction[]>
