@@ -162,16 +162,29 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
     savedRecently ? 'ring-2 ring-accent-mint ring-offset-2 ring-offset-ink-950' : ''
   }`
 
-  function handleTileClick(e: React.MouseEvent<HTMLDivElement>) {
-    const target = e.target as HTMLElement
-    if (target.closest('input, label, button')) return
+  // Tracking voor mouse down / up. Voorkomt dat tekst-selecteren binnen een input
+  // (en dan releasen buiten de input) per ongeluk de tile-navigatie triggert.
+  const downTargetRef = useRef<EventTarget | null>(null)
+
+  function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    downTargetRef.current = e.target
+  }
+  function handleMouseUp(e: React.MouseEvent<HTMLDivElement>) {
+    const down = downTargetRef.current as HTMLElement | null
+    const up = e.target as HTMLElement
+    downTargetRef.current = null
+    // Alleen navigeren als mousedown EN mouseup beide niet in een input/button/label gebeurden
+    if (down?.closest?.('input, label, button')) return
+    if (up.closest('input, label, button')) return
+    // Niet navigeren als er tekst is geselecteerd (gebruiker was aan het selecteren)
+    if (window.getSelection()?.toString()) return
     router.push(`/match/${match.id}`)
   }
 
   const hasPrediction = prediction !== null
 
   return (
-    <div className={tileClasses} onClick={handleTileClick}>
+    <div className={tileClasses} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
       <TileHeader homeName={homeName} awayName={awayName} match={match} />
       <div className="flex items-center justify-center gap-2 mt-3">
         <input
