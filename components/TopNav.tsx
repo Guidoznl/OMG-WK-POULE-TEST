@@ -40,6 +40,10 @@ export function TopNav() {
     { href: '/leaderboard', label: 'Ranglijst' },
     { href: '/rules',       label: 'Regels' },
   ]
+  // Voeg "Mijn voorspellingen" alleen toe als we de user al kennen
+  if (user) {
+    baseItems.push({ href: `/speler/${user.id}`, label: 'Mijn voorspellingen' })
+  }
   const navItems = user?.is_admin
     ? [...baseItems, { href: '/admin', label: 'Admin' }]
     : baseItems
@@ -57,7 +61,10 @@ export function TopNav() {
         <nav className="flex gap-0.5 overflow-x-auto">
           {navItems.map(item => {
             const isAdminLink = item.href === '/admin' || item.href.startsWith('/admin/')
-            const isActive = pathname === item.href || (isAdminLink && pathname.startsWith('/admin'))
+            const isMineLink = user && item.href === `/speler/${user.id}`
+            const isActive = pathname === item.href
+              || (isAdminLink && pathname.startsWith('/admin'))
+              || (isMineLink && pathname.startsWith(`/speler/${user.id}`))
             return (
               <Link
                 key={item.href}
