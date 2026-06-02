@@ -550,6 +550,18 @@ class MockProvider implements DataProvider {
     saveToStorage(STORAGE_KEYS.predictions, this.predictions)
   }
 
+  async clearPrediction(matchId: number): Promise<void> {
+    this.init()
+    if (!this.currentUserId) throw new Error('Niet ingelogd')
+    const fresh = this.freshMatch(matchId)
+    if (fresh.status !== 'open') {
+      throw new Error('Deze wedstrijd is vergrendeld en kan niet meer worden gewist.')
+    }
+    const userPreds = this.predictions[this.currentUserId] || []
+    this.predictions[this.currentUserId] = userPreds.filter(p => p.match_id !== matchId)
+    saveToStorage(STORAGE_KEYS.predictions, this.predictions)
+  }
+
   async getBonusQuestions(): Promise<BonusQuestion[]> {
     return BONUS_QUESTIONS
   }
