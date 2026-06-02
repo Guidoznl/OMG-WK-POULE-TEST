@@ -252,6 +252,13 @@ class SupabaseProvider implements DataProvider {
     if (error) throw error
   }
 
+  async clearPrediction(matchId: number): Promise<void> {
+    const { error } = await this.supabase.rpc('clear_prediction', {
+      p_match_id: matchId,
+    })
+    if (error) throw error
+  }
+
   async getBonusQuestions(): Promise<BonusQuestion[]> {
     const { data } = await this.supabase
       .from('bonus_questions')
