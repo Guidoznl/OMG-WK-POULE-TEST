@@ -82,6 +82,11 @@ export default function PredictionsPage() {
     })
   }
 
+  async function handleReset(matchId: number) {
+    await getDataProvider().clearPrediction(matchId)
+    setPredictions(prev => prev.filter(p => p.match_id !== matchId))
+  }
+
   if (loading) {
     return (
       <>
@@ -192,6 +197,7 @@ export default function PredictionsPage() {
                         match={match}
                         prediction={predictions.find(p => p.match_id === match.id) || null}
                         onSave={handleSave}
+                        onReset={handleReset}
                       />
                     ))}
                   </div>
