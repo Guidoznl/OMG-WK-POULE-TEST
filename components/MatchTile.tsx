@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Match, Prediction } from '@/lib/types'
+import { getDataProvider } from '@/lib/data-provider'
 import { formatDateLocal, formatTimeLocal } from '@/lib/date-utils'
 import { FlagCircle } from './FlagCircle'
 
@@ -11,11 +12,12 @@ type Props = {
   match: Match
   prediction: Prediction | null
   onSave: (matchId: number, home: number, away: number) => Promise<void>
+  onReset?: (matchId: number) => Promise<void>
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
-export function MatchTile({ match, prediction, onSave }: Props) {
+export function MatchTile({ match, prediction, onSave, onReset }: Props) {
   const router = useRouter()
   const [home, setHome] = useState<string>(prediction?.home_score?.toString() ?? '')
   const [away, setAway] = useState<string>(prediction?.away_score?.toString() ?? '')
@@ -23,11 +25,16 @@ export function MatchTile({ match, prediction, onSave }: Props) {
   const [savedRecently, setSavedRecently] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Sync inputs als de parent prediction wisselt (bv. na reset)
+  useEffect(() => {
+    setHome(prediction?.home_score?.toString() ?? '')
+    setAway(prediction?.away_score?.toString() ?? '')
+  }, [prediction?.home_score, prediction?.away_score])
+
   const homeName = match.home_team?.fifa_code || match.placeholder_home || 'TBD'
   const awayName = match.away_team?.fifa_code || match.placeholder_away || 'TBD'
   const hasResult = match.home_score !== null && match.away_score !== null
 
-  // Auto-save when both filled & changed
   useEffect(() => {
     if (match.status !== 'open') return
     const h = parseInt(home, 10), a = parseInt(away, 10)
@@ -44,7 +51,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
         timeoutRef.current = setTimeout(() => {
           setSave('idle')
           setSavedRecently(false)
-        }, 4000) // longer than before for clearer feedback
+        }, 4000)
       } catch (err) {
         console.error(err)
         setSave('error')
@@ -54,7 +61,22 @@ export function MatchTile({ match, prediction, onSave }: Props) {
     return () => clearTimeout(timer)
   }, [home, away])
 
-  // ═══ FINISHED — has score ═══════════════════════════════════════════════
+  async function handleReset(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!onReset) return
+    try {
+      await onReset(match.id)
+      setHome('')
+      setAway('')
+      setSave('idle')
+      setSavedRecently(false)
+    } catch (err: any) {
+      console.error(err)
+      setSave('error')
+    }
+  }
+
+  // ═══ FINISHED ════════════════════════════════════════════════════════════
   if (hasResult) {
     const correctOutcome = prediction && (
       Math.sign(prediction.home_score - prediction.away_score) ===
@@ -90,7 +112,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
     )
   }
 
-  // ═══ IN PROGRESS — match started ════════════════════════════════════════
+  // ═══ IN PROGRESS ═════════════════════════════════════════════════════════
   if (match.status === 'in_progress') {
     return (
       <Link href={`/match/${match.id}`} className="tile tile-locked p-4 fade-in block hover:opacity-80 transition-opacity">
@@ -114,7 +136,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
     )
   }
 
-  // ═══ LOCKED — 2h window before kickoff ══════════════════════════════════
+  // ═══ LOCKED ══════════════════════════════════════════════════════════════
   if (match.status === 'locked') {
     return (
       <Link href={`/match/${match.id}`} className="tile tile-locked p-4 fade-in border border-ink-600 block hover:opacity-80 transition-opacity">
@@ -135,19 +157,18 @@ export function MatchTile({ match, prediction, onSave }: Props) {
     )
   }
 
-  // ═══ OPEN — editable ════════════════════════════════════════════════════
-  // savedRecently => show green border for 4s
+  // ═══ OPEN — editable, met Reset knop ════════════════════════════════════
   const tileClasses = `tile p-4 fade-in transition-all duration-300 cursor-pointer hover:bg-ink-600 ${
     savedRecently ? 'ring-2 ring-accent-mint ring-offset-2 ring-offset-ink-950' : ''
   }`
 
-  // Klik ergens op de tile (behalve op input/label) → naar detailpagina
   function handleTileClick(e: React.MouseEvent<HTMLDivElement>) {
-    // Voorkom navigatie als de klik in een input/label terechtkomt
     const target = e.target as HTMLElement
-    if (target.closest('input, label')) return
+    if (target.closest('input, label, button')) return
     router.push(`/match/${match.id}`)
   }
+
+  const hasPrediction = prediction !== null
 
   return (
     <div className={tileClasses} onClick={handleTileClick}>
@@ -177,8 +198,7 @@ export function MatchTile({ match, prediction, onSave }: Props) {
           className="w-12 h-10 text-center text-base font-display font-medium tabular-nums"
         />
       </div>
-      {/* Persistent saved label below inputs */}
-      <div className="h-4 mt-2 text-center">
+      <div className="h-4 mt-2 flex items-center justify-center gap-3">
         {save === 'saving' && <span className="text-ink-400 text-[11px]">Opslaan…</span>}
         {save === 'saved' && (
           <span className="text-accent-mint text-[11px] font-medium inline-flex items-center gap-1">
@@ -186,6 +206,14 @@ export function MatchTile({ match, prediction, onSave }: Props) {
           </span>
         )}
         {save === 'error' && <span className="text-accent-coral text-[11px]">Fout — probeer opnieuw</span>}
+        {hasPrediction && onReset && (
+          <button
+            onClick={handleReset}
+            className="text-ink-500 hover:text-accent-coral text-[11px] underline underline-offset-2"
+          >
+            Reset
+          </button>
+        )}
       </div>
       <LocationLabel match={match} />
     </div>
