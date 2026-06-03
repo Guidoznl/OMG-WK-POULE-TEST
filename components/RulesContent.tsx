@@ -114,7 +114,7 @@ export function RulesContent() {
       <section>
         <h2 className="font-display text-base text-ink-50 font-medium mb-2">Nadere uitleg bonusvragen</h2>
         <ul className="space-y-1.5 ml-4 list-disc marker:text-ink-500">
-          <li><b className="text-ink-50">Rode kaarten</b>: alles telt mee tijdens de wedstrijd: direct rood, twee keer geel, reguliere speeltijd, verlenging, na afloop, Donald Trump, stafleden en wisselspelers.</li>
+          <li><b className="text-ink-50">Rode kaarten</b>: Alles telt mee tijdens de wedstrijd: direct rood, twee keer geel, reguliere speeltijd, verlenging, na afloop. Ook spelers, coaches, wisselspelers, grensrechters, Donald Trump, de mascotte stafleden en andere betrokkenen tellen mee.</li>
           <li><b className="text-ink-50">Marten de Roon</b>: alleen officiële speelminuten volgens de FIFA tellen mee. Penaltyseries, kleedkamerspeeches en andere belangrijke minuten in de kleedkamer tellen niet mee.</li>
           <li><b className="text-ink-50">Jelle in beeld</b>: de organisatoren beslissen of hij herkenbaar genoeg in beeld is. Alleen momenten tijdens de live-tv-uitzending van een WK-wedstrijd tellen mee. Herhalingen, social clips, foto&apos;s en andere overzichten waarin hetzelfde beeld opnieuw wordt getoond en beelden buiten de live-wedstrijdregistratie tellen niet mee. Alleen een exacte voorspelling levert punten op.</li>
         </ul>
