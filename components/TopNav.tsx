@@ -40,7 +40,6 @@ export function TopNav() {
     { href: '/leaderboard', label: 'Ranglijst' },
     { href: '/rules',       label: 'Regels' },
   ]
-  // Voeg "Mijn voorspellingen" alleen toe als we de user al kennen
   if (user) {
     baseItems.push({ href: `/speler/${user.id}`, label: 'Mijn voorspellingen' })
   }
@@ -51,11 +50,14 @@ export function TopNav() {
   return (
     <header className="border-b border-ink-600 bg-ink-900/80 backdrop-blur-sm sticky top-0 z-10">
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link href="/predictions" className="flex items-center gap-2 flex-shrink-0">
-          <span className="inline-flex items-center justify-center w-7 h-7 bg-accent-orange text-ink-950 font-display font-bold text-sm rounded">
-            O!
+        <Link href="/predictions" className="flex items-baseline gap-1.5 flex-shrink-0 group">
+          <span className="font-display font-bold text-ink-50 text-base tracking-tight group-hover:text-accent-orange transition-colors">
+            OMG
           </span>
-          <span className="hidden sm:inline font-display font-medium text-ink-50 text-sm">WK Poule '26</span>
+          <span className="font-display font-medium text-accent-orange text-base" aria-hidden="true">·</span>
+          <span className="font-display font-medium text-ink-50 text-base tracking-tight">
+            WK <span className="text-accent-orange">2026</span>
+          </span>
         </Link>
 
         <nav className="flex gap-0.5 overflow-x-auto">
@@ -74,7 +76,7 @@ export function TopNav() {
                     ? (isAdminLink ? 'bg-accent-orange/20 text-accent-orange' : 'bg-ink-700 text-ink-50')
                     : isAdminLink
                       ? 'text-accent-orange/80 hover:text-accent-orange'
-                      : 'text-ink-400 hover:text-ink-50'
+                      : 'text-ink-200 hover:text-ink-50'
                 }`}
               >
                 {item.label}
@@ -99,7 +101,7 @@ export function TopNav() {
           {user && !isMockMode() && (
             <button
               onClick={handleSignOut}
-              className="text-ink-400 hover:text-ink-50 text-xs whitespace-nowrap"
+              className="text-ink-200 hover:text-ink-50 text-xs whitespace-nowrap"
             >
               Uitloggen
             </button>
