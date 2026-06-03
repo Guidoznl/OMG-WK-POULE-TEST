@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Match, Prediction } from '@/lib/types'
-import { getDataProvider } from '@/lib/data-provider'
 import { formatDateLocal, formatTimeLocal } from '@/lib/date-utils'
 import { FlagCircle } from './FlagCircle'
 
@@ -25,7 +24,6 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
   const [savedRecently, setSavedRecently] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sync inputs als de parent prediction wisselt (bv. na reset)
   useEffect(() => {
     setHome(prediction?.home_score?.toString() ?? '')
     setAway(prediction?.away_score?.toString() ?? '')
@@ -92,14 +90,14 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
         <div className="flex items-center justify-center gap-3 mt-3">
           <div className="flex items-center gap-2 text-ink-50 font-display font-medium text-xl tabular-nums">
             <span>{match.home_score}</span>
-            <span className="text-ink-400 text-sm">–</span>
+            <span className="text-ink-200 text-sm">–</span>
             <span>{match.away_score}</span>
           </div>
         </div>
         {prediction && (
           <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-ink-600 text-xs">
-            <span className="text-ink-400">Jouw voorspelling:</span>
-            <span className="font-mono text-ink-200">{prediction.home_score}–{prediction.away_score}</span>
+            <span className="text-ink-200">Jouw voorspelling:</span>
+            <span className="font-mono text-ink-50">{prediction.home_score}–{prediction.away_score}</span>
             {exactMatch && <span className="px-1.5 py-0.5 rounded bg-accent-mint/20 text-accent-mint font-medium">EXACT</span>}
             {!exactMatch && correctOutcome && <span className="px-1.5 py-0.5 rounded bg-accent-amber/20 text-accent-amber font-medium">UITSLAG</span>}
             {prediction.points_awarded !== null && (
@@ -122,14 +120,14 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
             <div className="flex items-center justify-center gap-3 mt-3">
               <div className="flex items-center gap-2 text-ink-50 font-display text-lg tabular-nums">
                 <span>{prediction.home_score}</span>
-                <span className="text-ink-400 text-sm">–</span>
+                <span className="text-ink-200 text-sm">–</span>
                 <span>{prediction.away_score}</span>
               </div>
             </div>
-            <p className="text-center text-[10px] text-ink-500 mt-2 tracking-wide">WACHT OP EINDSTAND</p>
+            <p className="text-center text-[10px] text-ink-200 mt-2 tracking-wide">WACHT OP EINDSTAND</p>
           </>
         ) : (
-          <p className="text-center text-ink-400 text-xs mt-3">Geen voorspelling ingediend</p>
+          <p className="text-center text-ink-200 text-xs mt-3">Geen voorspelling ingediend</p>
         )}
         <LocationLabel match={match} />
       </Link>
@@ -145,25 +143,23 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
           <div className="flex items-center justify-center gap-3 mt-3">
             <div className="flex items-center gap-2 text-ink-50 font-display text-lg tabular-nums">
               <span>{prediction.home_score}</span>
-              <span className="text-ink-400 text-sm">–</span>
+              <span className="text-ink-200 text-sm">–</span>
               <span>{prediction.away_score}</span>
             </div>
           </div>
         ) : (
-          <p className="text-center text-ink-400 text-xs mt-3">Te laat — geen voorspelling mogelijk</p>
+          <p className="text-center text-ink-200 text-xs mt-3">Nog niet beschikbaar</p>
         )}
         <LocationLabel match={match} />
       </Link>
     )
   }
 
-  // ═══ OPEN — editable, met Reset knop ════════════════════════════════════
+  // ═══ OPEN — editable ════════════════════════════════════════════════════
   const tileClasses = `tile p-4 fade-in transition-all duration-300 cursor-pointer hover:bg-ink-600 ${
     savedRecently ? 'ring-2 ring-accent-mint ring-offset-2 ring-offset-ink-950' : ''
   }`
 
-  // Tracking voor mouse down / up. Voorkomt dat tekst-selecteren binnen een input
-  // (en dan releasen buiten de input) per ongeluk de tile-navigatie triggert.
   const downTargetRef = useRef<EventTarget | null>(null)
 
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
@@ -173,10 +169,8 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
     const down = downTargetRef.current as HTMLElement | null
     const up = e.target as HTMLElement
     downTargetRef.current = null
-    // Alleen navigeren als mousedown EN mouseup beide niet in een input/button/label gebeurden
     if (down?.closest?.('input, label, button')) return
     if (up.closest('input, label, button')) return
-    // Niet navigeren als er tekst is geselecteerd (gebruiker was aan het selecteren)
     if (window.getSelection()?.toString()) return
     router.push(`/match/${match.id}`)
   }
@@ -198,7 +192,7 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
           aria-label={`Score ${homeName}`}
           className="w-12 h-10 text-center text-base font-display font-medium tabular-nums"
         />
-        <span className="text-ink-400 text-sm">–</span>
+        <span className="text-ink-200 text-sm">–</span>
         <input
           type="number"
           min="0" max="20"
@@ -212,7 +206,7 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
         />
       </div>
       <div className="h-4 mt-2 flex items-center justify-center gap-3">
-        {save === 'saving' && <span className="text-ink-400 text-[11px]">Opslaan…</span>}
+        {save === 'saving' && <span className="text-ink-200 text-[11px]">Opslaan…</span>}
         {save === 'saved' && (
           <span className="text-accent-mint text-[11px] font-medium inline-flex items-center gap-1">
             <CheckMini /> Opgeslagen
@@ -222,7 +216,7 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
         {hasPrediction && onReset && (
           <button
             onClick={handleReset}
-            className="text-ink-500 hover:text-accent-coral text-[11px] underline underline-offset-2"
+            className="text-ink-200 hover:text-accent-coral text-[11px] underline underline-offset-2"
           >
             Reset
           </button>
@@ -247,9 +241,9 @@ function TileHeader({ homeName, awayName, match, statusLabel }: {
         <FlagCircle isoCode={match.home_team?.iso_code || null} />
         <span className="text-ink-50 text-sm font-medium truncate">{homeName}</span>
       </div>
-      <div className="text-center text-ink-400 text-[11px] leading-tight">
+      <div className="text-center text-ink-200 text-[11px] leading-tight">
         {statusLabel ? (
-          <div className="flex items-center justify-center gap-1 text-ink-500">
+          <div className="flex items-center justify-center gap-1 text-ink-200">
             {statusLabel === 'VERGRENDELD' && <LockIcon />}
             <span className="text-[10px] tracking-wider">{statusLabel}</span>
           </div>
@@ -271,7 +265,7 @@ function TileHeader({ homeName, awayName, match, statusLabel }: {
 function LocationLabel({ match }: { match: Match }) {
   if (!match.city_name) return null
   return (
-    <div className="text-center text-[10px] text-ink-500 mt-2 tracking-wider uppercase">
+    <div className="text-center text-[10px] text-ink-200 mt-2 tracking-wider uppercase">
       {match.city_name} · {match.country}
     </div>
   )
