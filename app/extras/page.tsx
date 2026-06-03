@@ -189,12 +189,16 @@ function BonusQuestionCard({ question, currentAnswer, onSave, locked }: {
 
       {question.question_type === 'number' && (
         <input
-          type="number"
-          min="0"
+          type="text"
           inputMode="numeric"
+          pattern="[0-9]*"
           value={value}
-          onChange={e => setValue(e.target.value)}
-          placeholder="Aantal"
+          onChange={e => {
+            // Strip alle niet-cijfers — voorkomt "zes" of "5,5" of "twee uur"
+            const digitsOnly = e.target.value.replace(/\D/g, '')
+            setValue(digitsOnly)
+          }}
+          placeholder="Aantal (alleen cijfers)"
           disabled={locked}
           className="w-full px-3 py-2.5 text-sm tabular-nums"
           aria-label={question.question_text}
