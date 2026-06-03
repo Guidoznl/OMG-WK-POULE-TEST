@@ -21,8 +21,7 @@ export function RulesContent() {
           <li><b className="text-ink-50">Exacte score</b>: punten als je de volledige eindstand exact goed hebt voorspeld.</li>
           <li><b className="text-ink-50">Juiste uitkomst</b>: punten als je winst, gelijkspel of verlies goed hebt voorspeld.</li>
           <li><b className="text-ink-50">Per juist doelpuntenaantal</b>: extra punten voor elk team waarvan je het exacte aantal goals goed hebt, ook als de rest van je voorspelling niet klopt.</li>
-          <li><b className="text-ink-50">De punten stapelen</b>: heb je de exacte score goed, dan krijg je dus de punten voor exacte score + juiste uitkomst + beide juiste doelpuntenaantallen.</li>
-        </ul>
+        
       </section>
 
       <section>
