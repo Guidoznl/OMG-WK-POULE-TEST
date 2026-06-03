@@ -15,13 +15,16 @@ export function RulesContent() {
         </p>
       </section>
 
-      <section>
+         <section>
         <h2 className="font-display text-base text-ink-50 font-medium mb-2">Punten per wedstrijd</h2>
         <ul className="space-y-1.5 ml-4 list-disc marker:text-ink-500">
+          <li><b className="text-ink-50">Exacte score</b>: volledige punten als je de uitslag exact goed hebt.</li>
+          <li><b className="text-ink-50">Juiste winnaar</b>: punten als je winst/gelijk/verlies goed hebt voorspeld.</li>
+          <li><b className="text-ink-50">Per juist doelpuntenaantal</b>: extra punten voor elk team waarvan je het exacte aantal goals goed hebt — ook als de rest niet klopt.</li>
           <li><b className="text-ink-50">Exacte score</b>: punten als je de volledige eindstand exact goed hebt voorspeld.</li>
           <li><b className="text-ink-50">Juiste uitkomst</b>: punten als je winst, gelijkspel of verlies goed hebt voorspeld.</li>
           <li><b className="text-ink-50">Per juist doelpuntenaantal</b>: extra punten voor elk team waarvan je het exacte aantal goals goed hebt, ook als de rest van je voorspelling niet klopt.</li>
-        
+        </ul>
       </section>
 
       <section>
