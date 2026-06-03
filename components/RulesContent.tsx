@@ -32,7 +32,7 @@ export function RulesContent() {
               <th className="text-left font-normal pb-1.5">Fase</th>
               <th className="text-right font-normal pb-1.5">Exact</th>
               <th className="text-right font-normal pb-1.5">Uitkomst</th>
-              <th className="text-right font-normal pb-1.5">Per goal</th>
+              <th className="text-right font-normal pb-1.5">Goals</th>
             </tr>
           </thead>
           <tbody className="text-ink-200">
