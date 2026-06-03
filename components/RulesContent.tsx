@@ -88,28 +88,76 @@ export function RulesContent() {
         </ul>
       </section>
 
-      <section>
-        <h2 className="font-display text-base text-ink-50 font-medium mb-2">Bonusvragen</h2>
-        <p className="mb-2">
-          Aan het einde van het toernooi worden de bonusvragen uitgekeerd. Alle bonusvragen sluiten bij de start van de eerste wedstrijd van het toernooi:
-          <b className="text-ink-50"> donderdag 11 juni 2026 om 21:00 Amsterdam-tijd</b>.
-        </p>
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-ink-500 text-[10px] tracking-wider uppercase border-b border-ink-600">
-              <th className="text-left font-normal pb-1.5">Bonusvraag</th>
-              <th className="text-right font-normal pb-1.5">Punten</th>
-            </tr>
-          </thead>
-          <tbody className="text-ink-200">
-            <tr className="border-b border-ink-800"><td className="py-1.5"><b className="text-ink-50">Welk land wordt wereldkampioen?</b><br />De winnaar van het WK.</td><td className="text-right tabular-nums align-top py-1.5">50</td></tr>
-            <tr className="border-b border-ink-800"><td className="py-1.5"><b className="text-ink-50">Wie wordt de topscorer van het toernooi?</b><br />Het meeste aantal doelpunten tijdens het WK.</td><td className="text-right tabular-nums align-top py-1.5">40</td></tr>
-            <tr className="border-b border-ink-800"><td className="py-1.5"><b className="text-ink-50">Hoeveel rode kaarten worden er tijdens het gehele toernooi uitgedeeld?</b><br />Het exacte aantal rode kaarten tijdens het gehele toernooi.</td><td className="text-right tabular-nums align-top py-1.5">30</td></tr>
-            <tr className="border-b border-ink-800"><td className="py-1.5"><b className="text-ink-50">Hoeveel minuten speelt Marten de Roon?</b><br />Exact goed: 40 punten. Afwijking van 1 t/m 45 minuten: 25 punten. Afwijking van 46 t/m 90 minuten: 10 punten.</td><td className="text-right tabular-nums align-top py-1.5">40 / 25 / 10</td></tr>
-            <tr><td className="py-1.5"><b className="text-ink-50">Hoe vaak komt Jelle in beeld tijdens een wedstrijd?</b><br />Alleen exact goed levert punten op.</td><td className="text-right tabular-nums align-top py-1.5">150</td></tr>
-          </tbody>
-        </table>
-      </section>
+<section>
+  <h2 className="font-display text-base text-ink-50 font-medium mb-2">Bonusvragen</h2>
+  <p className="mb-2">
+    Aan het einde van het toernooi worden de bonusvragen uitgekeerd. Alle bonusvragen sluiten bij de start van de eerste wedstrijd van het toernooi:
+    <b className="text-ink-50"> donderdag 11 juni 2026 om 21:00 Amsterdam-tijd</b>.
+  </p>
+
+  <table className="w-full text-xs">
+    <thead>
+      <tr className="text-ink-500 text-[10px] tracking-wider uppercase border-b border-ink-600">
+        <th className="text-left font-normal pb-1.5">Bonusvraag</th>
+        <th className="text-right font-normal pb-1.5">Punten</th>
+      </tr>
+    </thead>
+    <tbody className="text-ink-200">
+      <tr className="border-b border-ink-800">
+        <td className="py-1.5">
+          <b className="text-ink-50">Welk land wordt wereldkampioen?</b>
+          <br />
+          De winnaar van het WK.
+        </td>
+        <td className="text-right tabular-nums align-top py-1.5">50</td>
+      </tr>
+
+      <tr className="border-b border-ink-800">
+        <td className="py-1.5">
+          <b className="text-ink-50">Wie wordt de topscorer van het toernooi?</b>
+          <a
+            href="https://www.voetbalwedden.net/wk-2026/wedden/topscorers"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-2 inline-flex items-center rounded-full border border-ink-700 px-2 py-0.5 text-[10px] font-medium text-ink-300 hover:border-ink-500 hover:text-ink-50 transition-colors"
+          >
+            Tips!
+          </a>
+          <br />
+          Het meeste aantal doelpunten tijdens het WK.
+        </td>
+        <td className="text-right tabular-nums align-top py-1.5">40</td>
+      </tr>
+
+      <tr className="border-b border-ink-800">
+        <td className="py-1.5">
+          <b className="text-ink-50">Hoeveel rode kaarten worden er tijdens het gehele toernooi uitgedeeld?</b>
+          <br />
+          Het exacte aantal rode kaarten tijdens het gehele toernooi.
+        </td>
+        <td className="text-right tabular-nums align-top py-1.5">30</td>
+      </tr>
+
+      <tr className="border-b border-ink-800">
+        <td className="py-1.5">
+          <b className="text-ink-50">Hoeveel minuten speelt Marten de Roon?</b>
+          <br />
+          Exact goed: 40 punten. Afwijking van 1 t/m 45 minuten: 25 punten. Afwijking van 46 t/m 90 minuten: 10 punten.
+        </td>
+        <td className="text-right tabular-nums align-top py-1.5">40 / 25 / 10</td>
+      </tr>
+
+      <tr>
+        <td className="py-1.5">
+          <b className="text-ink-50">Hoe vaak komt Jelle in beeld tijdens een wedstrijd?</b>
+          <br />
+          Alleen exact goed levert punten op.
+        </td>
+        <td className="text-right tabular-nums align-top py-1.5">150</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
 
       <section>
         <h2 className="font-display text-base text-ink-50 font-medium mb-2">Nadere uitleg bonusvragen</h2>
