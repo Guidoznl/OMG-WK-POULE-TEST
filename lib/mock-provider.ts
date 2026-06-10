@@ -980,6 +980,15 @@ class MockProvider implements DataProvider {
     }
     saveToStorage(STORAGE_KEYS.bonusPredictions, this.bonusPredictions)
     return { updated }
+
+  async adminGetKnockoutSuggestions(): Promise<KnockoutSuggestion[]> {
+    return []
+  }
+  async adminGetTeamsWithGroup(): Promise<TeamWithGroup[]> {
+    return []
+  }
+  async adminSetKnockoutTeams(matchId: number, homeTeamId: number | null, awayTeamId: number | null): Promise<void> {
+    // Mock: niets doen
   }
 
   // ────────────────────────────────────────────────────────────────────
