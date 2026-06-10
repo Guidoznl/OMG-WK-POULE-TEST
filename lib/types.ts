@@ -210,7 +210,30 @@ export type PlayerBonusAnswer = {
   correct_answer: string | null
   points_awarded: number | null
 }
-
+export type KnockoutSuggestion = {
+  match_id: number
+  stage_id: number
+  stage_name: string
+  placeholder_home: string | null
+  placeholder_away: string | null
+  home_team_id: number | null
+  away_team_id: number | null
+  suggested_home_team_id: number | null
+  suggested_away_team_id: number | null
+  home_is_manual: boolean
+  away_is_manual: boolean
+  home_allowed_groups: string | null
+  away_allowed_groups: string | null
+}
+ 
+export type TeamWithGroup = {
+  team_id: number
+  fifa_code: string
+  team_name: string
+  iso_code: string | null
+  group_label: string | null
+  group_rank: number | null
+}
 // ──────────────────────────────────────────────────────────────────────────
 // Data provider interface
 // ──────────────────────────────────────────────────────────────────────────
@@ -253,7 +276,10 @@ export interface DataProvider {
   adminNormalizeAnswer(userId: string, questionId: number, normalized: string): Promise<void>
   adminSetBonusCorrectAnswer(questionId: number, correctAnswer: string): Promise<void>
   adminScoreBonusQuestion(questionId: number): Promise<{ updated: number }>
-
+  adminGetKnockoutSuggestions(): Promise<KnockoutSuggestion[]>
+  adminGetTeamsWithGroup(): Promise<TeamWithGroup[]>
+  adminSetKnockoutTeams(matchId: number, homeTeamId: number | null, awayTeamId: number | null): Promise<void>
+  
   // ── Public aggregate + per-player predictions (visible to all users) ──
   getMatchPredictionAggregate(matchId: number): Promise<{
     homeWins: number; draws: number; awayWins: number; total: number
