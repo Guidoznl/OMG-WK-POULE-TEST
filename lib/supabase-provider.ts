@@ -505,6 +505,27 @@ class SupabaseProvider implements DataProvider {
     if (error) throw new Error(error.message)
     return { updated: Number(data || 0) }
   }
+
+  async adminGetKnockoutSuggestions(): Promise<KnockoutSuggestion[]> {
+    const { data, error } = await this.supabase.rpc('admin_get_knockout_suggestions')
+    if (error) throw error
+    return (data || []) as KnockoutSuggestion[]
+  }
+ 
+  async adminGetTeamsWithGroup(): Promise<TeamWithGroup[]> {
+    const { data, error } = await this.supabase.rpc('admin_get_teams_with_group')
+    if (error) throw error
+    return (data || []) as TeamWithGroup[]
+  }
+ 
+  async adminSetKnockoutTeams(matchId: number, homeTeamId: number | null, awayTeamId: number | null): Promise<void> {
+    const { error } = await this.supabase.rpc('admin_set_knockout_teams', {
+      p_match_id: matchId,
+      p_home_team_id: homeTeamId,
+      p_away_team_id: awayTeamId,
+    })
+    if (error) throw error
+  }
 }
 
 let _instance: SupabaseProvider | null = null
