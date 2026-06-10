@@ -234,7 +234,7 @@ const MATCHES: Match[] = MATCHES_RAW.map(r => buildMatch(r))
 
 // Bonus questions (the three extras)
 const BONUS_QUESTIONS: BonusQuestion[] = [
-  { id: 1, question_text: 'Wie wordt WK kampioen?',           question_type: 'team',   points_exact: 50,  points_close: 0,  close_threshold: 0, display_order: 1, is_active: true, correct_answer: null },
+  { id: 1, question_text: 'Welk land wint het WK?',           question_type: 'team',   points_exact: 50,  points_close: 0,  close_threshold: 0, display_order: 1, is_active: true, correct_answer: null },
   { id: 2, question_text: 'Wie wordt topscorer van het toernooi?', question_type: 'text',   points_exact: 20,  points_close: 0,  close_threshold: 0, display_order: 2, is_active: true, correct_answer: null },
   { id: 3, question_text: 'Hoe vaak komt Jelle in beeld?',    question_type: 'number', points_exact: 100, points_close: 25, close_threshold: 3, display_order: 3, is_active: true, correct_answer: null },
 ]
