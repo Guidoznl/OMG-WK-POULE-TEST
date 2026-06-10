@@ -134,6 +134,10 @@ function BonusQuestionCard({ question, currentAnswer, onSave, locked }: {
   const scoringType = (question as any).scoring_type as string | undefined
   const isScale = scoringType === 'scale'
 
+  // Detecteer of dit de topscorer-vraag is (voor de "Tips!" link).
+  // Match op question_text — id zou kunnen wijzigen tussen omgevingen.
+  const isTopscorer = /topscorer/i.test(question.question_text)
+
   useEffect(() => {
     if (locked) return
     if (value === currentAnswer) return
@@ -165,7 +169,19 @@ function BonusQuestionCard({ question, currentAnswer, onSave, locked }: {
   return (
     <div className={wrapClass}>
       <div className="flex items-start justify-between mb-3 gap-3">
-        <h3 className="font-display text-base text-ink-50 font-medium">{question.question_text}</h3>
+        <h3 className="font-display text-base text-ink-50 font-medium">
+          {question.question_text}
+          {isTopscorer && (
+            <a
+              href="https://www.voetbalwedden.net/wk-2026/wedden/topscorers"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 inline-flex items-center rounded-full border border-ink-700 px-2 py-0.5 text-[10px] font-medium text-ink-200 hover:border-ink-500 hover:text-ink-50 transition-colors align-middle"
+            >
+              Tips!
+            </a>
+          )}
+        </h3>
         <span className="text-xs text-accent-orange font-display font-medium whitespace-nowrap">
           {pointsLabel}
         </span>
