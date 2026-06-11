@@ -32,7 +32,9 @@ export function GroupStandings({ groupLabel, matches, predictions }: Props) {
     return computeVirtualStandings(groupLabel, matches, predictions)
   }, [groupLabel, matches, predictions])
 
-  const standings = tab === 'official' ? officialStandings : virtualStandings
+  const standings = (tab === 'official' ? officialStandings : virtualStandings)
+  .slice()
+  .sort((a, b) => a.rank - b.rank)
   const anyPlayed = standings.some(s => s.played > 0)
   const predictedCount = matches
     .filter(m => m.group_label === groupLabel)
