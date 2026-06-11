@@ -7,6 +7,8 @@ import {
   DataProvider, Match, Prediction, Profile, Stage,
   GroupStanding, LeaderboardEntry, MatchdaySummary,
   BonusQuestion, BonusPrediction,
+  KnockoutSuggestion, TeamWithGroup,
+  PlayerPrediction, PlayerProfile, PlayerBonusAnswer,
 } from './types'
 
 class SupabaseProvider implements DataProvider {
