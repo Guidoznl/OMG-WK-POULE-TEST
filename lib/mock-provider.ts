@@ -980,7 +980,7 @@ class MockProvider implements DataProvider {
     }
     saveToStorage(STORAGE_KEYS.bonusPredictions, this.bonusPredictions)
     return { updated }
-
+  }
   async adminGetKnockoutSuggestions(): Promise<KnockoutSuggestion[]> {
     return []
   }
