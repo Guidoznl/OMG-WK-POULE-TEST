@@ -9,6 +9,7 @@ import {
   GroupStanding, LeaderboardEntry, Team, MatchStatus, MatchdaySummary,
   BonusQuestion, BonusPrediction,
   AdminMatchOverview, AdminBonusAnswer, MatchResultState,
+  KnockoutSuggestion, TeamWithGroup,
 } from './types'
 
 // ---------------------------------------------------------------------------
