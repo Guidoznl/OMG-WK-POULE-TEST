@@ -254,11 +254,12 @@ function TileHeader({ homeName, awayName, match, statusLabel, showLockIcon }: {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
               {showLockIcon && <LockIcon />}
               <span>{formatDateLocal(match.kickoff_ams)}</span>
+              <span className="text-ink-200">·</span>
+              <span>{formatTimeLocal(match.kickoff_ams)} uur</span>
             </div>
-            <div>{formatTimeLocal(match.kickoff_ams)} uur</div>
           </>
         )}
       </div>
