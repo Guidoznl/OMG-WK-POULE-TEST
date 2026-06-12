@@ -117,8 +117,9 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
         <TileHeader homeName={homeName} awayName={awayName} match={match} statusLabel="GESTART" />
         {prediction ? (
           <>
-            <div className="flex items-center justify-center gap-3 mt-3">
-              <div className="flex items-center gap-2 text-ink-50 font-display text-lg tabular-nums">
+            <p className="text-center text-[10px] text-ink-200 mt-3 tracking-wider uppercase">Jouw voorspelling</p>
+            <div className="flex items-center justify-center gap-3 mt-1">
+              <div className="flex items-center gap-2 text-ink-200 font-display text-lg tabular-nums">
                 <span>{prediction.home_score}</span>
                 <span className="text-ink-200 text-sm">–</span>
                 <span>{prediction.away_score}</span>
@@ -138,17 +139,21 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
   if (match.status === 'locked') {
     return (
       <Link href={`/match/${match.id}`} className="tile tile-locked p-4 fade-in border border-ink-600 block hover:opacity-80 transition-opacity">
-        <TileHeader homeName={homeName} awayName={awayName} match={match} statusLabel="VERGRENDELD" />
+        {/* In locked-modus tonen we datum/tijd (handiger dan alleen "VERGRENDELD") */}
+        <TileHeader homeName={homeName} awayName={awayName} match={match} showLockIcon />
         {prediction ? (
-          <div className="flex items-center justify-center gap-3 mt-3">
-            <div className="flex items-center gap-2 text-ink-50 font-display text-lg tabular-nums">
-              <span>{prediction.home_score}</span>
-              <span className="text-ink-200 text-sm">–</span>
-              <span>{prediction.away_score}</span>
+          <>
+            <p className="text-center text-[10px] text-ink-200 mt-3 tracking-wider uppercase">Jouw voorspelling</p>
+            <div className="flex items-center justify-center gap-3 mt-1">
+              <div className="flex items-center gap-2 text-ink-200 font-display text-lg tabular-nums">
+                <span>{prediction.home_score}</span>
+                <span className="text-ink-200 text-sm">–</span>
+                <span>{prediction.away_score}</span>
+              </div>
             </div>
-          </div>
+          </>
         ) : (
-          <p className="text-center text-ink-200 text-xs mt-3">Nog niet beschikbaar</p>
+          <p className="text-center text-ink-200 text-xs mt-3">Geen voorspelling ingediend</p>
         )}
         <LocationLabel match={match} />
       </Link>
@@ -229,11 +234,12 @@ export function MatchTile({ match, prediction, onSave, onReset }: Props) {
 
 // ─── Subcomponents ──────────────────────────────────────────────────────
 
-function TileHeader({ homeName, awayName, match, statusLabel }: {
+function TileHeader({ homeName, awayName, match, statusLabel, showLockIcon }: {
   homeName: string
   awayName: string
   match: Match
   statusLabel?: string
+  showLockIcon?: boolean
 }) {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -244,12 +250,14 @@ function TileHeader({ homeName, awayName, match, statusLabel }: {
       <div className="text-center text-ink-200 text-[11px] leading-tight">
         {statusLabel ? (
           <div className="flex items-center justify-center gap-1 text-ink-200">
-            {statusLabel === 'VERGRENDELD' && <LockIcon />}
             <span className="text-[10px] tracking-wider">{statusLabel}</span>
           </div>
         ) : (
           <>
-            <div>{formatDateLocal(match.kickoff_ams)}</div>
+            <div className="flex items-center justify-center gap-1">
+              {showLockIcon && <LockIcon />}
+              <span>{formatDateLocal(match.kickoff_ams)}</span>
+            </div>
             <div>{formatTimeLocal(match.kickoff_ams)} uur</div>
           </>
         )}
