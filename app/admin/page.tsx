@@ -346,81 +346,87 @@ function AdminMatchRow({ overview, onChange }: {
   })()
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 bg-ink-700 rounded-tile hover:bg-ink-700/80 transition-colors">
-      {/* Match number */}
-      <div className="text-ink-500 text-[10px] tabular-nums w-7 text-center flex-shrink-0">
-        #{match.id}
-      </div>
+    <div className="flex flex-col gap-2 px-3 py-2.5 bg-ink-700 rounded-tile hover:bg-ink-700/80 transition-colors md:flex-row md:items-center md:gap-2">
+      {/* Eerste rij op mobiel: match # + teams + status. Op desktop: alles op één lijn */}
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {/* Match number */}
+        <div className="text-ink-500 text-[10px] tabular-nums w-7 text-center flex-shrink-0">
+          #{match.id}
+        </div>
 
-      {/* Teams (compact) */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-        <FlagCircle isoCode={match.home_team?.iso_code || null} size="sm" />
-        <span className="text-ink-50 text-xs font-medium">{homeName}</span>
-        <span className="text-ink-500 text-[10px] mx-0.5">vs</span>
-        <span className="text-ink-50 text-xs font-medium">{awayName}</span>
-        <FlagCircle isoCode={match.away_team?.iso_code || null} size="sm" />
-      </div>
+        {/* Teams (compact) */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <FlagCircle isoCode={match.home_team?.iso_code || null} size="sm" />
+          <span className="text-ink-50 text-xs font-medium">{homeName}</span>
+          <span className="text-ink-500 text-[10px] mx-0.5">vs</span>
+          <span className="text-ink-50 text-xs font-medium">{awayName}</span>
+          <FlagCircle isoCode={match.away_team?.iso_code || null} size="sm" />
+        </div>
 
-      {/* Date — only on wider screens to save room */}
-      <div className="text-right hidden md:block flex-shrink-0">
-        <div className="text-ink-400 text-[10px] tabular-nums">{formatDateLocal(match.kickoff_ams)}</div>
-        <div className="text-ink-500 text-[10px] tabular-nums">{formatTimeLocal(match.kickoff_ams)}</div>
-      </div>
-
-      {/* Score inputs (always visible) */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <input
-          type="number"
-          min="0" max="99"
-          inputMode="numeric"
-          value={home}
-          onChange={e => setHome(e.target.value)}
-          disabled={isConfirmed || busy}
-          aria-label={`Score ${homeName}`}
-          className="w-9 h-8 text-center text-sm font-display font-medium tabular-nums disabled:opacity-60"
-        />
-        <span className="text-ink-500 text-[10px]">–</span>
-        <input
-          type="number"
-          min="0" max="99"
-          inputMode="numeric"
-          value={away}
-          onChange={e => setAway(e.target.value)}
-          disabled={isConfirmed || busy}
-          aria-label={`Score ${awayName}`}
-          className="w-9 h-8 text-center text-sm font-display font-medium tabular-nums disabled:opacity-60"
-        />
-        <span className="w-3 text-center">{saveIndicator}</span>
-      </div>
-
-      {/* Status / OK / undo / clear actions */}
-      <div className="flex flex-col items-end gap-0.5 flex-shrink-0 min-w-[90px]">
-        {statusContent}
-        <div className="text-[9px] text-ink-500 tabular-nums">
-          {prediction_count} voorsp.{isConfirmed && exact_count > 0 ? ` · ${exact_count} exact` : ''}
+        {/* Date — only on wider screens */}
+        <div className="text-right hidden md:block flex-shrink-0">
+          <div className="text-ink-400 text-[10px] tabular-nums">{formatDateLocal(match.kickoff_ams)}</div>
+          <div className="text-ink-500 text-[10px] tabular-nums">{formatTimeLocal(match.kickoff_ams)}</div>
         </div>
       </div>
 
-      {/* Details link icon */}
-      <Link
-        href={`/admin/match/${match.id}`}
-        className="text-ink-500 hover:text-ink-50 transition-colors p-1 rounded"
-        title="Details / voorspellingen bekijken"
-      >
-        <DetailIcon />
-      </Link>
+      {/* Tweede rij op mobiel: score + acties + status */}
+      <div className="flex items-center gap-2 justify-between md:justify-end md:gap-2">
+        {/* Score inputs (always visible) */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <input
+            type="number"
+            min="0" max="99"
+            inputMode="numeric"
+            value={home}
+            onChange={e => setHome(e.target.value)}
+            disabled={isConfirmed || busy}
+            aria-label={`Score ${homeName}`}
+            className="w-10 h-8 text-center text-sm font-display font-medium tabular-nums bg-ink-800 border border-ink-600 rounded text-ink-50 disabled:opacity-60"
+          />
+          <span className="text-ink-500 text-[10px]">–</span>
+          <input
+            type="number"
+            min="0" max="99"
+            inputMode="numeric"
+            value={away}
+            onChange={e => setAway(e.target.value)}
+            disabled={isConfirmed || busy}
+            aria-label={`Score ${awayName}`}
+            className="w-10 h-8 text-center text-sm font-display font-medium tabular-nums bg-ink-800 border border-ink-600 rounded text-ink-50 disabled:opacity-60"
+          />
+          <span className="w-3 text-center">{saveIndicator}</span>
+        </div>
 
-      {/* Optional clear button — only when there IS a score */}
-      {(result_state === 'provisional' || isConfirmed) && (
-        <button
-          onClick={handleClear}
-          disabled={busy}
-          title="Uitslag wissen"
-          className="text-ink-500 hover:text-accent-coral transition-colors p-1 rounded"
+        {/* Status / OK / undo / clear actions */}
+        <div className="flex flex-col items-end gap-0.5 flex-shrink-0 min-w-[90px]">
+          {statusContent}
+          <div className="text-[9px] text-ink-500 tabular-nums">
+            {prediction_count} voorsp.{isConfirmed && exact_count > 0 ? ` · ${exact_count} exact` : ''}
+          </div>
+        </div>
+
+        {/* Details link icon */}
+        <Link
+          href={`/admin/match/${match.id}`}
+          className="text-ink-500 hover:text-ink-50 transition-colors p-1 rounded flex-shrink-0"
+          title="Details / voorspellingen bekijken"
         >
-          <TrashIcon />
-        </button>
-      )}
+          <DetailIcon />
+        </Link>
+
+        {/* Optional clear button — only when there IS a score */}
+        {(result_state === 'provisional' || isConfirmed) && (
+          <button
+            onClick={handleClear}
+            disabled={busy}
+            title="Uitslag wissen"
+            className="text-ink-500 hover:text-accent-coral transition-colors p-1 rounded flex-shrink-0"
+          >
+            <TrashIcon />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
