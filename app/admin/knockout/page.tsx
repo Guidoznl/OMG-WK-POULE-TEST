@@ -27,14 +27,30 @@ export default function KnockoutAdminPage() {
     setTeams(t)
   }
 
-  useEffect(() => {
+useEffect(() => {
     async function load() {
-      const provider = getDataProvider()
-      const user = await provider.getCurrentUser()
-      if (!user) { router.push('/login'); return }
-      if (!user.is_admin) { router.push('/predictions'); return }
-      await reload()
-      setLoading(false)
+      console.log('[knockout] load start')
+      try {
+        const provider = getDataProvider()
+        console.log('[knockout] provider:', provider)
+        const user = await provider.getCurrentUser()
+        console.log('[knockout] user:', user)
+        if (!user) { router.push('/login'); return }
+        if (!user.is_admin) { router.push('/predictions'); return }
+
+        console.log('[knockout] calling RPCs...')
+        const [s, t] = await Promise.all([
+          provider.adminGetKnockoutSuggestions(),
+          provider.adminGetTeamsWithGroup(),
+        ])
+        console.log('[knockout] suggestions:', s.length, 'teams:', t.length)
+        setSuggestions(s)
+        setTeams(t)
+      } catch (err) {
+        console.error('[knockout] LOAD ERROR:', err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [router])
