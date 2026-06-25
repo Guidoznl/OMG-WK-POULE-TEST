@@ -98,12 +98,20 @@ export default function AdminHomePage() {
       <main className="max-w-3xl mx-auto p-4 pb-12">
         <div className="flex items-center justify-between mb-2">
           <h1 className="font-display text-2xl font-medium text-ink-50">Admin</h1>
-          <Link
-            href="/admin/bonus"
-            className="text-xs text-ink-400 hover:text-ink-50 underline underline-offset-2"
-          >
-            Bonus &rarr;
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/knockout"
+              className="text-xs text-ink-200 hover:text-ink-50 underline underline-offset-2"
+            >
+              Knockout &rarr;
+            </Link>
+            <Link
+              href="/admin/bonus"
+              className="text-xs text-ink-200 hover:text-ink-50 underline underline-offset-2"
+            >
+              Bonus &rarr;
+            </Link>
+          </div>
         </div>
         <p className="text-ink-400 text-sm mb-6">
           Vul de uitslag in — wordt automatisch <b className="text-ink-50">voorlopig</b> opgeslagen. Klik <b className="text-ink-50">OK</b> om te bevestigen en de punten uit te delen.
