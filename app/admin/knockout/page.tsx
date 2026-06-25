@@ -46,8 +46,13 @@ useEffect(() => {
         console.log('[knockout] suggestions:', s.length, 'teams:', t.length)
         setSuggestions(s)
         setTeams(t)
-      } catch (err) {
+      } catch (err: any) {
         console.error('[knockout] LOAD ERROR:', err)
+        console.error('[knockout] error message:', err?.message)
+        console.error('[knockout] error details:', err?.details)
+        console.error('[knockout] error code:', err?.code)
+        console.error('[knockout] error JSON:', JSON.stringify(err))
+      }
       } finally {
         setLoading(false)
       }
@@ -82,7 +87,11 @@ useEffect(() => {
       await reload()
       setTimeout(() => setMessage(null), 3000)
     } catch (err: any) {
-      setMessage({ kind: 'error', text: err.message || 'Fout bij opslaan' })
+        console.error('[knockout] LOAD ERROR:', err)
+        console.error('[knockout] error message:', err?.message)
+        console.error('[knockout] error details:', err?.details)
+        console.error('[knockout] error code:', err?.code)
+        console.error('[knockout] error JSON:', JSON.stringify(err))
     }
   }
 
