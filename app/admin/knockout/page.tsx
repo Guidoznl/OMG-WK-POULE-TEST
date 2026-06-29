@@ -52,7 +52,6 @@ useEffect(() => {
         console.error('[knockout] error details:', err?.details)
         console.error('[knockout] error code:', err?.code)
         console.error('[knockout] error JSON:', JSON.stringify(err))
-      }
       } finally {
         setLoading(false)
       }
