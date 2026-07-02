@@ -21,6 +21,7 @@ export default function PlayerProfilePage() {
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeStageId, setActiveStageId] = useState<number>(1)
 
   useEffect(() => {
     async function load() {
@@ -43,6 +44,9 @@ export default function PlayerProfilePage() {
           setPredictions(preds)
           setBonusAnswers(bonus)
           setStages(stageList)
+          // Standaard open op de hoogste fase waar de speler voorspellingen heeft
+          const stageIds = Array.from(new Set(preds.map(p => p.stage_id))).sort((a, b) => b - a)
+          if (stageIds.length > 0) setActiveStageId(stageIds[0])
         }
       } catch (err: any) {
         setError(err.message || 'Fout bij laden')
@@ -84,6 +88,17 @@ export default function PlayerProfilePage() {
         return { stageId, subGroups }
       })
   }, [predictions])
+
+  // Welke fases heeft deze speler voorspellingen voor?
+  const stagesWithPredictions = useMemo(() => {
+    const ids = Array.from(new Set(predictions.map(p => p.stage_id))).sort((a, b) => a - b)
+    return ids
+  }, [predictions])
+
+  // Alleen data voor actieve fase
+  const activeGroups = useMemo(() => {
+    return grouped.find(g => g.stageId === activeStageId)
+  }, [grouped, activeStageId])
 
   if (loading) {
     return <><TopNav /><main className="max-w-3xl mx-auto p-4"><p className="text-ink-400 text-sm text-center mt-12">Laden…</p></main></>
@@ -151,31 +166,51 @@ export default function PlayerProfilePage() {
             {isMe ? 'Je hebt nog geen voorspellingen ingediend.' : 'Deze speler heeft nog geen voorspellingen ingediend.'}
           </p>
         ) : (
-          <div className="space-y-6">
-            {grouped.map(({ stageId, subGroups }) => (
-              <div key={stageId}>
-                <h2 className="font-display text-sm font-medium text-ink-200 mb-3 px-1">
-                  {stageName.get(stageId) || `Fase ${stageId}`}
-                </h2>
-                <div className="space-y-4">
-                  {subGroups.map((sub, idx) => (
-                    <div key={sub.label ?? idx}>
-                      {sub.label && (
-                        <h3 className="text-[11px] tracking-wider uppercase text-ink-500 mb-1.5 px-1">
-                          {dutchGroupLabel(sub.label)}
-                        </h3>
-                      )}
-                      <div className="space-y-1">
-                        {sub.preds.map(p => (
-                          <PlayerPredictionRow key={p.match_id} pred={p} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          <>
+            {/* Fase-tabs */}
+            {stagesWithPredictions.length > 1 && (
+              <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+                {stagesWithPredictions.map(sid => {
+                  const isActive = sid === activeStageId
+                  return (
+                    <button
+                      key={sid}
+                      onClick={() => setActiveStageId(sid)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                        isActive ? 'bg-ink-600 text-ink-50' : 'text-ink-400 hover:text-ink-50'
+                      }`}
+                    >
+                      {stageName.get(sid) || `Fase ${sid}`}
+                    </button>
+                  )
+                })}
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Voorspellingen actieve fase */}
+            {activeGroups ? (
+              <div className="space-y-4">
+                {activeGroups.subGroups.map((sub, idx) => (
+                  <div key={sub.label ?? idx}>
+                    {sub.label && (
+                      <h3 className="text-[11px] tracking-wider uppercase text-ink-500 mb-1.5 px-1">
+                        {dutchGroupLabel(sub.label)}
+                      </h3>
+                    )}
+                    <div className="space-y-1">
+                      {sub.preds.map(p => (
+                        <PlayerPredictionRow key={p.match_id} pred={p} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-ink-400 text-sm text-center py-8">
+                Geen voorspellingen in deze fase.
+              </p>
+            )}
+          </>
         )}
 
         {/* BONUSVRAGEN sectie */}
