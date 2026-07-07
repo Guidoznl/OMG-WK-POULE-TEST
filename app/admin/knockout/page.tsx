@@ -14,7 +14,7 @@ export default function KnockoutAdminPage() {
   const [suggestions, setSuggestions] = useState<KnockoutSuggestion[]>([])
   const [teams, setTeams] = useState<TeamWithGroup[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeStage, setActiveStage] = useState<number>(2)
+  const [activeStage, setActiveStage] = useState<number>(3)
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
   async function reload() {
