@@ -15,7 +15,7 @@ export default function PredictionsPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [summaries, setSummaries] = useState<MatchdaySummary[]>([])
-  const [activeStageId, setActiveStageId] = useState<number>(4)
+  const [activeStageId, setActiveStageId] = useState<number>(5)
   const [activeGroup, setActiveGroup] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
