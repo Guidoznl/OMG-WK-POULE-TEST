@@ -14,7 +14,7 @@ export default function AdminHomePage() {
   const router = useRouter()
   const [overview, setOverview] = useState<AdminMatchOverview[]>([])
   const [stages, setStages] = useState<Stage[]>([])
-  const [activeStage, setActiveStage] = useState<number>(4)
+  const [activeStage, setActiveStage] = useState<number>(5)
   const [filter, setFilter] = useState<'all' | 'pending' | 'provisional' | 'confirmed'>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
