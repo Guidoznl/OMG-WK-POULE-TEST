@@ -21,7 +21,7 @@ export default function PlayerProfilePage() {
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeStageId, setActiveStageId] = useState<number>(5)
+  const [activeStageId, setActiveStageId] = useState<number>(6)
 
   useEffect(() => {
     async function load() {
